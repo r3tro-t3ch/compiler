@@ -33,13 +33,13 @@ int main(int argc, char *argv[]){
 
 			char *identifier = get_identifier(l);
 
-			/*if( isdigit((int*)identifier) ){
+			if( isdigit(*identifier) ){
 				
 				token_array = realloc(token_array, (token_count + 1) * sizeof(token));
 				token_array[token_count] = new_token("T_CONSTANT", identifier);
 				token_count++;
 
-			}else*/ if( is_keyword(identifier) ){
+			}else if( is_keyword(identifier) ){
 
 				token_array = realloc(token_array, (token_count + 1) * sizeof(token));
 				token_array[token_count] = new_token("T_KEYWORD", identifier);
