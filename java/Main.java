@@ -20,7 +20,8 @@ public class Main{
 	        "output(led, LOW)\n" +
         	"output(serial, \"Off\")\n" +
     	    "wait(1)\n" +
-	        "}\0" );		
+	        "}" +
+			'\0');		
 	
 		ArrayList<token> token_array = new ArrayList<token>();
 
@@ -49,7 +50,70 @@ public class Main{
 					token_array.add(new token("T_IDENTIFIER", identifier));
 
 				}
+			}
+
+			switch(l.get_current_char()){
+					case '(' : {
+								token_array.add(new token("T_LPAREN", String.valueOf(l.get_current_char())));
+								break;
+						   }
+					case ')' : {
+								token_array.add(new token("T_RPAREN", String.valueOf(l.get_current_char())));
+								break;
+						   }
+				case '{' : {
+								token_array.add(new token("T_LBRACE", String.valueOf(l.get_current_char())));
+								break;
+						   }
+
 			
+				case '}' : {
+								token_array.add(new token("T_RBRACE", String.valueOf(l.get_current_char())));
+								break;
+						   }
+				case '+' : {
+								token_array.add(new token("T_PLUS", String.valueOf(l.get_current_char())));
+								break;
+						   }
+				case '-' : {
+								token_array.add(new token("T_MINUS", String.valueOf(l.get_current_char())));
+								break;
+						   }
+				case '*' : {
+								token_array.add(new token("T_ASTERIX", String.valueOf(l.get_current_char())));
+								break;
+						   }
+				case '/' : {
+								token_array.add(new token("T_FSLASH", String.valueOf(l.get_current_char())));
+								break;
+						   }
+				case '%' : {
+								token_array.add(new token("T_MOD", String.valueOf(l.get_current_char())));
+								break;
+						   }
+				case '=' : {
+								token_array.add(new token("T_EQUAL", String.valueOf(l.get_current_char())));
+								break;
+						   }
+				case '>' : {
+								token_array.add(new token("T_GREATER", String.valueOf(l.get_current_char())));
+								break;
+							   }
+				case '<' : {
+								token_array.add(new token("T_LESSER", String.valueOf(l.get_current_char())));
+								break;
+						   }
+				case ',' : {
+								token_array.add(new token("T_COMMA", String.valueOf(l.get_current_char())));
+								break;
+						   }
+				case '"' : {
+								String string_identifier = l.get_string();
+								token_array.add(new token("T_STRING", string_identifier));
+								break;
+						   }
+				
+				
 			}
 			
 			l.next_char();

@@ -38,10 +38,17 @@ class keywords{
 
 	private boolean search_keyword(String identifier){
 	
-		for(int i = KEYWORD_LIST.)
-		System.out.println(KEYWORD_LIST.contains(identifier));
+		boolean FLAG = false;
 
-		return KEYWORD_LIST.contains(identifier);
+		for(int i = 0; i < 24; i++){
+			
+			if(KEYWORDS[i].equals(identifier)){
+				return true;	
+			}
+
+		}
+
+		return false;
 
 	}
 
@@ -91,45 +98,54 @@ class lexer{
 
 		this.index++;
 		this.current_char = this.code[this.index];
-
+	
 	} 
 
 	public String get_string(){
 
+		ArrayList<Character> identifier = new ArrayList<Character>();
 		this.next_char();
-		char identifier[] = new char[50];
-		int i = 0;
-		identifier[i] = this.current_char;
-		i++;
+		identifier.add(this.current_char);
 		this.next_char();
-		while( current_char != '\"' ){
-
-			identifier[i] = this.current_char;
-			i++;
+		while( this.current_char != '"' ){
+			
+			identifier.add(this.current_char);
 			this.next_char();
 
 		}
 
-		return(new String(identifier));
+		StringBuilder identifier_str = new StringBuilder();
+	
+		for(char i : identifier){
 
+			identifier_str.append(String.valueOf(i));
+
+		}
+
+		return(identifier_str.toString());
 	}
 
 	public String get_identifier(){
 
-		char identifier[] = new char[50];
-		int i = 0;
-		identifier[i] = this.current_char;
-		i++;
+		ArrayList<Character> identifier = new ArrayList<Character>();
+		identifier.add(this.current_char);
 		this.next_char();
 		while( is_alpha_numeric( this.current_char )){
 
-			identifier[i] = this.current_char;
-			i++;
+			identifier.add(this.current_char);
 			this.next_char();
 
 		}
 
-		return(new String(identifier));
+		StringBuilder identifier_str = new StringBuilder();
+
+		for(char i : identifier){
+
+			identifier_str.append(String.valueOf(i));
+
+		}
+
+		return(identifier_str.toString());
 
 	}
 
