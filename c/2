@@ -1,0 +1,66 @@
+#include <stdio.h>
+#include <ctype.h>
+#include <stdlib.h>
+#include <string.h>
+#include "HEADER/compiler.h"
+
+
+int main(int argc, char *argv[]){
+
+	lexer *l = new_lexer(
+		"var led = 13\n"
+		"output(led, HIGH)\n"
+		"\0" );
+
+	parser *p = new_parser(l);
+
+	//token **token_array = NULL;
+	//size_t token_count = 0;
+
+
+	/*token_array = realloc(token_array, (token_count + 1) * sizeof(token));
+	token_array[token_count] = get_current_token(p);
+	token_count++;
+	*/
+
+	ast *root = new_ast("AST_HEAD");
+
+	while(p->l->current_char != '\0'){
+
+		/*token_array = realloc(token_array, (token_count + 1) * sizeof(token));
+		token_array[token_count] = get_token(p->l);
+		token_count++;
+		*/
+		
+		token *t = get_next_token(p);
+		while( strncmp(get_current_token(p)->type,"T_NEWLINE",9) != 0){
+			
+			if(strncmp(t->content, "var", 3) == 0){
+
+				root->next = new_ast("AST_VAR_DEF_ASSIGNMENT");
+				root->var_def_var_name = "AST_VAR_DEF_ASSIGNMENT";
+				token *next_token = get_token(p);
+				parser_eat(next_token, "T_IDENTIFIER");
+				root->ast_link->var_asign_def = new_var_ast();
+				root->ast_link->var_asign_def->var_name = next_token->content;
+				next_token = get_token(p);
+				parser_eat(next_token, "T_EQUAL");
+
+				next_token = get_token(p);
+				parser_eat(next_token, "T_CONSTANT");
+				root->ast_link->var_asign_def->var_content = next_token->content;
+				root->compound->code_size++;
+
+			}
+		
+		}
+	}
+
+/*
+	for(int i = 0; i < token_count; i++){
+        fprintf(stdout," TOKEN    %s --> %s   \n",token_array[i]->type,token_array[i]->content);
+    }
+*/
+
+	return 0;
+}

@@ -1,0 +1,6 @@
+var in = input(LIGHT)
+if( in < SOMEVALUE ){
+	output(LED,HIGH)
+}else{
+	output(LED,LOW)
+}

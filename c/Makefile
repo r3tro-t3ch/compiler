@@ -2,7 +2,7 @@
 HEADER_CODE:= HEADER/*.c  HEADER/*.h
 MAIN:= main.c
 TARGET:= compiler
-CFLAGS:= -Wall -g -Werror -s 
+CFLAGS:= -Wall -g -Werror  
 DFLAGS:= --leak-check=full -s
 
 build:

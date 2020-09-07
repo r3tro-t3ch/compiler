@@ -8,6 +8,7 @@
 #define KEYWORD_LEN 15
 #define SPACE ' '
 #define NEWLINE '\n'
+#define BUILTIN_FUN_COUNT 3
 
 
 typedef struct LEXER{
@@ -50,6 +51,49 @@ token* new_token(char *type, char *content);
 //char to string
 char* char_to_str(char a);
 
+typedef struct AST{
 
+	char *type;
+	
+	//compound type
+	size_t code_size;
+	struct AST *next;
+
+	//function call
+	char *function_name;
+	char **args;
+	size_t args_count;
+
+	//variable definition and assignment
+	char *var_def_var_name;
+	char *var_def_var_content;
+
+	//variable assignment
+	char *var_name;
+	char *var_content;
+
+} ast;
+
+//creates new ast
+ast* new_ast(char *type);
+
+typedef struct PARSER{
+
+	token *current_token;
+	lexer *l;
+
+} parser;
+
+//creating a new parser
+parser *new_parser(lexer *l);
+
+//gets the current token
+token* get_current_token(parser *p);
+
+//get next token
+token* get_next_token(parser *p);
+
+//parser eat function
+void parser_eat(token *t, char *type);
 
 #endif
