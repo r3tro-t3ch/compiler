@@ -2,6 +2,7 @@
 #define COMPILER_H
 
 #include <stdlib.h>
+#include "error.h"
 
 #define true 1
 #define false 0
@@ -93,7 +94,13 @@ token* get_current_token(parser *p);
 //get next token
 token* get_next_token(parser *p);
 
+//peek next token
+token* peek_next_token(parser *p);
+
 //parser eat function
-void parser_eat(token *t, char *type);
+void parser_eat(token *t, char *type, error_list *err_list, ast *a);
+
+//parse variable declaration
+ast* parse_var_def(parser *p);
 
 #endif

@@ -1,4 +1,5 @@
 #include "compiler.h"
+#include "error.h"
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -149,6 +150,7 @@ token* get_next_token(parser *p){
 	if(p->l->current_char == '\n' ){
 		
 			t = new_token("T_NEWLINE", "NEWLINE");
+			p->current_token = t;
 			next_char(p->l);
 			return t;
 		
@@ -158,6 +160,175 @@ token* get_next_token(parser *p){
 	if( isalnum( p->l-> current_char) ){
 
 		char *identifier = get_identifier(p->l);
+
+		if( isdigit(*identifier) ){
+				
+			t = new_token("T_CONSTANT", identifier);
+			p->current_token = t;
+			return t;
+
+		}else if( is_keyword(identifier) ){
+
+			t =  new_token("T_KEYWORD", identifier);
+			p->current_token = t;
+			return t;
+
+		}else{
+
+			t = new_token("T_IDENTIFIER", identifier);
+			p->current_token = t;
+			return t;
+
+		}
+
+	}
+
+	switch(p->l->current_char){
+
+		case '(':{
+				t = new_token("T_LPAREN", char_to_str(p->l->current_char));
+				p->current_token = t;
+				next_char(p->l);
+				return t;
+				break;
+		 	}
+		case ')':{
+				t =  new_token("T_RPAREN", char_to_str(p->l->current_char));
+				p->current_token = t;
+				next_char(p->l);
+				return t;
+				break;
+			 }
+		case '{':{
+				t = new_token("T_LBRACE", char_to_str(p->l->current_char));
+				p->current_token = t;
+				next_char(p->l);
+				return t;
+				break;
+			 }
+		case '}':{
+				t = new_token("T_RBRACE", char_to_str(p->l->current_char));
+				p->current_token = t;
+				next_char(p->l);
+				return t;
+				break;
+			 }
+		case '+':{
+				t = new_token("T_PLUS", char_to_str(p->l->current_char));
+				p->current_token = t;
+				next_char(p->l);
+				return t;
+				break;
+			 }
+		case '-':{
+				t = new_token("T_MINUS", char_to_str(p->l->current_char));
+				p->current_token = t;
+				next_char(p->l);
+				return t;
+				break;
+			 }
+		case '*':{
+				t = new_token("T_ASTERIX", char_to_str(p->l->current_char));
+				p->current_token = t;
+				next_char(p->l);
+				return t;
+				break;
+			 }
+		case '/':{
+				t = new_token("T_FSLASH", char_to_str(p->l->current_char));
+				p->current_token = t;
+				next_char(p->l);
+				return t;
+				break;
+			 }
+		case '%':{
+				t = new_token("T_MOD", char_to_str(p->l->current_char));
+				p->current_token = t;
+				next_char(p->l);
+				return t;
+				break;
+			 }
+		case '=':{
+				t = new_token("T_EQUAL", char_to_str(p->l->current_char));
+				p->current_token = t;
+				next_char(p->l);
+				return t;
+				break;
+			 }
+		case '>':{
+				t = new_token("T_GREATER", char_to_str(p->l->current_char));
+				p->current_token = t;
+				next_char(p->l);
+				return t;
+				break;
+			 }
+		case '<':{
+				t = new_token("T_LESSER", char_to_str(p->l->current_char));
+				p->current_token = t;
+				next_char(p->l);
+				return t;
+				break;
+			 }
+		case ',':{
+				t = new_token("T_COMMA", char_to_str(p->l->current_char));
+				p->current_token = t;
+				next_char(p->l);
+				return t;
+				break;
+			 }
+		case '\0':{
+				t = new_token("T_NULL", "NULL");
+				p->current_token = t;
+				next_char(p->l);
+				return t;
+				break;
+			 }
+		case '"':{
+
+				char *identifier = get_string(p->l);
+											
+				t = new_token("T_STRING", identifier);
+				p->current_token = t;
+				next_char(p->l);
+				return t;
+				break;
+			 }
+	}	
+
+	return NULL;
+
+}
+
+//get next token
+token* peek_next_token(parser *p){
+
+	lexer* l = new_lexer(p->l->code); 
+	l->current_char = p->l->current_char;
+	l->index = p->l->index;
+
+	parser *temp_p = new_parser(l);
+	temp_p->current_token = p->current_token;
+
+	token *t = calloc(1, sizeof(struct TOKEN));
+
+	if(temp_p->l->current_char == SPACE){
+		
+		while(temp_p->l->current_char == SPACE)
+			next_char(temp_p->l);
+		
+	}
+	if(temp_p->l->current_char == '\n' ){
+		
+			t = new_token("T_NEWLINE", "NEWLINE");
+			next_char(temp_p->l);
+			return t;
+		
+	}
+
+
+	if( isalnum( temp_p->l-> current_char) ){
+
+		char *identifier = get_identifier(temp_p->l);
 
 		
 
@@ -180,83 +351,89 @@ token* get_next_token(parser *p){
 
 	}
 
-	switch(p->l->current_char){
+	switch(temp_p->l->current_char){
 
 		case '(':{
 				t = new_token("T_LPAREN", char_to_str(p->l->current_char));
-				next_char(p->l);
+				next_char(temp_p->l);
 				return t;
 				break;
 		 	}
 		case ')':{
 				t =  new_token("T_RPAREN", char_to_str(p->l->current_char));
-				next_char(p->l);
+				next_char(temp_p->l);
 				return t;
 				break;
 			 }
 		case '{':{
 				t = new_token("T_LBRACE", char_to_str(p->l->current_char));
-				next_char(p->l);
+				next_char(temp_p->l);
 				return t;
 				break;
 			 }
 		case '}':{
 				t = new_token("T_RBRACE", char_to_str(p->l->current_char));
-				next_char(p->l);
+				next_char(temp_p->l);
 				return t;
 				break;
 			 }
 		case '+':{
 				t = new_token("T_PLUS", char_to_str(p->l->current_char));
-				next_char(p->l);
+				next_char(temp_p->l);
 				return t;
 				break;
 			 }
 		case '-':{
 				t = new_token("T_MINUS", char_to_str(p->l->current_char));
-				next_char(p->l);
+				next_char(temp_p->l);
 				return t;
 				break;
 			 }
 		case '*':{
 				t = new_token("T_ASTERIX", char_to_str(p->l->current_char));
-				next_char(p->l);
+				next_char(temp_p->l);
 				return t;
 				break;
 			 }
 		case '/':{
 				t = new_token("T_FSLASH", char_to_str(p->l->current_char));
-				next_char(p->l);
+				next_char(temp_p->l);
 				return t;
 				break;
 			 }
 		case '%':{
 				t = new_token("T_MOD", char_to_str(p->l->current_char));
-				next_char(p->l);
+				next_char(temp_p->l);
 				return t;
 				break;
 			 }
 		case '=':{
 				t = new_token("T_EQUAL", char_to_str(p->l->current_char));
-				next_char(p->l);
+				next_char(temp_p->l);
 				return t;
 				break;
 			 }
 		case '>':{
 				t = new_token("T_GREATER", char_to_str(p->l->current_char));
-				next_char(p->l);
+				next_char(temp_p->l);
 				return t;
 				break;
 			 }
 		case '<':{
 				t = new_token("T_LESSER", char_to_str(p->l->current_char));
-				next_char(p->l);
+				next_char(temp_p->l);
 				return t;
 				break;
 			 }
 		case ',':{
 				t = new_token("T_COMMA", char_to_str(p->l->current_char));
-				next_char(p->l);
+				next_char(temp_p->l);
+				return t;
+				break;
+			 }
+		case '\0':{
+				t = new_token("T_NULL", "NULL");
+				next_char(temp_p->l);
 				return t;
 				break;
 			 }
@@ -265,7 +442,7 @@ token* get_next_token(parser *p){
 				char *identifier = get_string(p->l);
 											
 				t = new_token("T_STRING", identifier);
-				next_char(p->l);
+				next_char(temp_p->l);
 				return t;
 				break;
 			 }
@@ -274,6 +451,7 @@ token* get_next_token(parser *p){
 	return NULL;
 
 }
+
 
 //creates new ast
 ast* new_ast(char *type){
@@ -320,20 +498,27 @@ token* get_current_token(parser *p){
 }
 
 //parser eat function
-void parser_eat(token *t, char *type){
+void parser_eat(token *t, char *type, error_list *err_list, ast *a){
 
 	size_t token_len = strlen(type);
 
 	if(strncmp(t->type, type, token_len ) != 0){
-	
-		fprintf(
-			stderr, 
-			"unexpected token %s of type %s\n",
+
+		fprintf(stdout, "%td", a->code_size);
+
+		size_t err_msg_len = strlen(t->content) + strlen(t->type) + ERR_MSG_LEN; 
+
+		char *err_msg = calloc( err_msg_len ,sizeof(char));
+
+		snprintf(err_msg, err_msg_len,
+			"unexpected token %s of %s type\n",			
 			t->content,
 			t->type
 		);
 
-		exit(1);
+		error* e = new_error(err_msg ,a->code_size+1);
+
+		add_new_error(err_list, e);
 	}
 
 }
