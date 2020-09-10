@@ -49,12 +49,12 @@ void next_char(lexer *l){
 }
 
 //search keyword
-int search_keyword(char *identifier, size_t len){
+int search_keyword(char *identifier){
 
 	int SEARCH_FLAG = false;
 
 	for(int i = 0; i < KEYWORD_LEN; i++){
-		if(strncmp(identifier, KEYWORD[i], len) == 0){
+		if(strcmp(KEYWORD[i],identifier) == 0){
 			//fprintf(stdout, " %s , %s \t ", identifier, KEYWORD[i]);
 			SEARCH_FLAG = true;
 			break;
@@ -67,9 +67,8 @@ int search_keyword(char *identifier, size_t len){
 
 //to check id identidier is keyword or not
 int is_keyword(char *identifier){
-	size_t len =  strlen(identifier);
 	//fprintf(stdout, "%s  ->  %lu \n", identifier, len);
-	return search_keyword(identifier, len);
+	return search_keyword(identifier);
 }
 
 //to get string
@@ -458,10 +457,12 @@ ast* new_ast(char *type){
 
 	ast* _ast = calloc(1, sizeof(ast));
 
+	_ast->previous_ast_node = NULL;
+	_ast->next_ast_node = NULL;
+
 	_ast->type = type;
-	
-	_ast->code_size = 0;
-	_ast->next = NULL;
+	_ast->ast_node_index = 0;
+
 
 	//function call
 	_ast->function_name = (void *) 0;
@@ -478,6 +479,59 @@ ast* new_ast(char *type){
 
 	return _ast;
 
+}
+
+//create new ast list
+ast_l* new_ast_list(){
+
+	ast_l *ast_list = calloc(1, sizeof(ast_l));
+	ast_list->ast_index = 0;
+	ast_list->root_node = NULL;
+	ast_list->last_node = NULL;
+	ast_list->line_count = 0;
+	return ast_list;
+
+}
+
+//add new ast
+void add_new_ast(ast_l *ast_list, ast *node){
+
+	if(ast_list->ast_index == 0){
+
+		ast_list->root_node = node;
+		ast_list->last_node = node;
+		ast_list->ast_index++;
+
+	}else{
+		
+		ast_list->last_node->next_ast_node = node;
+		node->previous_ast_node = ast_list->last_node;
+		ast_list->last_node = node;
+		ast_list->ast_index++;
+
+	}		
+
+}
+
+//print ast
+void print_ast(ast_l *ast_list){
+
+	ast *node = ast_list->root_node;
+
+	fprintf(stdout,"%td, %s\n",
+			node->ast_node_index,
+			node->type);
+
+
+	while( node->next_ast_node != NULL ){
+
+		node = node->next_ast_node;
+
+		fprintf(stdout,"%td, %s\n", 
+				node->ast_node_index,
+			node->type);
+
+	}
 }
 
 //creating a new parser
@@ -497,29 +551,118 @@ token* get_current_token(parser *p){
 
 }
 
+//skip line
+void skip_current_line(parser *p){
+
+	while( strncmp(get_current_token(p)->type, "T_NEWLINE",9) != 0){
+
+		get_next_token(p);
+
+	}
+
+}
+
 //parser eat function
-void parser_eat(token *t, char *type, error_list *err_list, ast *a){
+int parser_eat(token *t, char *type, error_list *err_list, size_t code_size){
 
 	size_t token_len = strlen(type);
 
 	if(strncmp(t->type, type, token_len ) != 0){
 
-		fprintf(stdout, "%td", a->code_size);
-
-		size_t err_msg_len = strlen(t->content) + strlen(t->type) + ERR_MSG_LEN; 
+		size_t err_msg_len = strlen(t->content) + strlen(t->type) + strlen(type) + ERR_MSG_LEN; 
 
 		char *err_msg = calloc( err_msg_len ,sizeof(char));
 
 		snprintf(err_msg, err_msg_len,
-			"unexpected token %s of %s type\n",			
+			"unexpected token %s of %s type expected %s\n",			
 			t->content,
-			t->type
+			t->type,
+			type
 		);
 
-		error* e = new_error(err_msg ,a->code_size+1);
+		error* e = new_error(err_msg ,code_size+1);
 
 		add_new_error(err_list, e);
+		return 0;
+
+	}else{
+
+		return 1;
+
 	}
 
 }
 
+//parse var declaration and definition
+ast* parse_var_def( parser *p, error_list *err_list, ast_l* ast_list){
+
+	ast *a = new_ast("AST_VAR_DEF");
+
+	int error_flag = 0;
+
+	if(parser_eat(get_current_token(p), "T_KEYWORD", err_list, ast_list->line_count) == 0){
+		error_flag = 1;
+	}
+	
+	get_next_token(p);
+	
+	if (parser_eat(get_current_token(p), "T_IDENTIFIER", err_list, ast_list->line_count) == 0){
+		error_flag = 1;
+	}
+
+	a->var_def_var_name = get_current_token(p)->content;
+				
+	token *t = peek_next_token(p);
+
+	if( strncmp(t->type, "T_EQUAL", 7) == 0){
+					
+		get_next_token(p);
+
+		a->type = "AST_VAR_DEF_ASSIGNMENT";
+		if(parser_eat(get_current_token(p), "T_EQUAL", err_list, ast_list->line_count) == 0){
+			error_flag = 1;
+		}
+	
+		get_next_token(p);
+		if(parser_eat(get_current_token(p), "T_CONSTANT", err_list, ast_list->line_count) == 0){
+			error_flag = 1;
+		}
+		a->var_def_var_content = get_current_token(p)->content;
+					
+		a->ast_node_index = ast_list->line_count;
+
+		if(error_flag == 0){
+		
+			return a;
+
+		}
+
+	}else{
+					
+		get_next_token(p);
+		parser_eat(get_current_token(p), "T_NEWLINE", err_list, ast_list->line_count);
+					
+		a->ast_node_index = ast_list->line_count;
+
+		ast_list->line_count++;
+
+		if(error_flag == 0){
+		
+			return a;
+
+		}
+
+	}	
+
+	return NULL;
+
+}
+
+//parse newline character
+void parse_newline(parser* p, error_list *err_list, ast_l *ast_list){
+
+	parser_eat(get_current_token(p), "T_NEWLINE", err_list, ast_list->line_count);
+	ast_list->line_count++;
+	get_next_token(p);
+
+}

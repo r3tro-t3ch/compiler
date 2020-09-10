@@ -27,7 +27,7 @@ lexer* new_lexer(char *code);
 void next_char(lexer *l);
 
 //search keyword
-int search_keyword(char *identifier, size_t len);
+int search_keyword(char *identifier);
 
 //to check id identidier is keyword or not
 int is_keyword(char *identifier);
@@ -54,11 +54,11 @@ char* char_to_str(char a);
 
 typedef struct AST{
 
+	struct AST *previous_ast_node;
+	struct AST *next_ast_node;
+
 	char *type;
-	
-	//compound type
-	size_t code_size;
-	struct AST *next;
+	size_t ast_node_index;
 
 	//function call
 	char *function_name;
@@ -77,6 +77,24 @@ typedef struct AST{
 
 //creates new ast
 ast* new_ast(char *type);
+
+typedef struct AST_LIST{
+
+	size_t ast_index;
+	size_t line_count;
+	ast *root_node;
+	ast *last_node;
+
+} ast_l;
+
+//create new ast list
+ast_l* new_ast_list();
+
+//add new ast
+void add_new_ast(ast_l *ast_list, ast *node);
+
+//print ast
+void print_ast(ast_l *ast_list);
 
 typedef struct PARSER{
 
@@ -97,10 +115,18 @@ token* get_next_token(parser *p);
 //peek next token
 token* peek_next_token(parser *p);
 
-//parser eat function
-void parser_eat(token *t, char *type, error_list *err_list, ast *a);
+//skip line
+void skip_current_line(parser *p);
 
-//parse variable declaration
-ast* parse_var_def(parser *p);
+//parser eat function
+int parser_eat(token *t, char *type, error_list *err_list, size_t code_size);
+
+//parse given statements
+
+//parse variable declaration and definition
+ast* parse_var_def(parser *p,error_list *err_list,  ast_l *ast_list);
+
+//parse newline character
+void parse_newline(parser* p, error_list *err_list, ast_l *ast_list);
 
 #endif

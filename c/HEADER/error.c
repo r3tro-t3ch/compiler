@@ -8,7 +8,8 @@ error_list* new_error_list(){
 
 	error_list *err_list = calloc(1,sizeof(error_list));
 	err_list->error_index = 0;
-	err_list->err_list = NULL;
+	err_list->first_error = NULL;
+	err_list->last_error = NULL;
 	return err_list;
 
 }
@@ -19,6 +20,7 @@ error* new_error(char *err_msg, size_t err_line){
 	error *err = calloc(1, sizeof(error));
 	err->line_number = err_line;
 	err->error_msg = err_msg;
+	err->next_error = NULL;
 	return err;
 
 }
@@ -26,31 +28,45 @@ error* new_error(char *err_msg, size_t err_line){
 //add new error to array list
 void add_new_error(error_list *err_list, error *err){
 
-	size_t count = err_list->error_index+1;
-	err_list->err_list = realloc(err_list->err_list ,
-					count * sizeof(error*));
-	if(err_list->err_list == NULL){
+	if(err_list->error_index == 0){
 
-		fprintf(stdout, "realloc failed");
-		exit(1);
+		err_list->first_error = err;
+		err_list->last_error = err;
+		err_list->error_index++;
+
+	}else{
+
+		err_list->last_error->next_error = err;
+		err_list->last_error = err;
+		err_list->error_index++;
 
 	}
-	err_list->err_list[err_list->error_index] = err;
-	err_list->error_index++;
-
 }
 
 //print errors
-void print_errors(error_list *list){
+void print_errors(error_list *err_list){
 
-	for(size_t i = 0; i < list->error_index ;i++){
-	
-		fprintf(stderr, "ERROR : line %td -> %s \n",
-			list->err_list[i]->line_number,
-			list->err_list[i]->error_msg
+	error *root = err_list->first_error;
+	print_error(root);
+
+}
+
+//print single error
+void print_error(error *err){
+
+	fprintf(stderr, "ERROR : line %td -> %s \n",
+			err->line_number,
+			err->error_msg
 		);
 
-	}	
+	while(err->next_error != NULL){
 
+		err = err->next_error;
+
+		fprintf(stderr, "ERROR : line %td -> %s \n",
+			err->line_number,
+			err->error_msg
+		);
+	}
 }
 
