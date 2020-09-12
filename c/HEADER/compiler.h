@@ -3,6 +3,8 @@
 
 #include <stdlib.h>
 #include "error.h"
+#include "symbol_table.h"
+
 
 #define true 1
 #define false 0
@@ -32,6 +34,9 @@ int search_keyword(char *identifier);
 //to check id identidier is keyword or not
 int is_keyword(char *identifier);
 
+//is builtin function
+int is_builtin_function(char *identifier);
+
 //to get string
 char* get_string(lexer *l);
 
@@ -52,6 +57,32 @@ token* new_token(char *type, char *content);
 //char to string
 char* char_to_str(char a);
 
+typedef struct FUNCTION_ARGS{
+
+	struct FUNCTION_ARGS *next_arg;
+
+	char *arg_name;
+	char *arg_type;
+
+
+} function_args;
+
+typedef struct FUNCTION_ARGS_LIST{
+
+	function_args *first_arg;
+	function_args *last_arg;
+
+} function_args_list;
+
+//create new funciton argurment list
+function_args_list* new_function_arg_list();
+
+//create new function argument
+function_args* new_function_argument(char *name, char *type);
+
+//add new function argument to args list
+void add_new_arg(function_args_list *args_list, function_args *arg);
+
 typedef struct AST{
 
 	struct AST *previous_ast_node;
@@ -60,16 +91,28 @@ typedef struct AST{
 	char *type;
 	size_t ast_node_index;
 
+	//ast constant
+	char *constant_value;
+	struct AST *l_operator;
+	struct AST *r_operator;
+
+	//operator
+	char *operator_value;
+	struct AST *l_operand;
+	struct AST *r_operand;
+
 	//function call
 	char *function_name;
-	char **args;
+	function_args_list *args_list;
 	size_t args_count;
 
 	//variable definition and assignment
 	char *var_def_var_name;
 	char *var_def_var_content;
+	struct AST *var_def_var_content_expr;
 
-	//variable assignment
+
+	//variable 
 	char *var_name;
 	char *var_content;
 
@@ -128,5 +171,11 @@ ast* parse_var_def(parser *p,error_list *err_list,  ast_l *ast_list);
 
 //parse newline character
 void parse_newline(parser* p, error_list *err_list, ast_l *ast_list);
+
+//parse var assignment
+ast* parse_var_assignment(parser *p,error_list *err_list,  ast_l *ast_list);
+
+//parse function call
+ast* parse_function_call(parser *p,error_list *err_list,  ast_l *ast_list);
 
 #endif
