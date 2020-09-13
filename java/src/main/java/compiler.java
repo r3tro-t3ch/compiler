@@ -1,4 +1,3 @@
-package compiler_class;
 
 import java.util.regex.*; 
 import java.util.*;
@@ -149,7 +148,7 @@ class lexer{
 
 	}
 
-	public static boolean is_alpha_numeric(char str)
+	public boolean is_alpha_numeric(char str)
     {
         String regex = "[a-zA-Z0-9]";
 
