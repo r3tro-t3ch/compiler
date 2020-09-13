@@ -1,129 +1,63 @@
-
-//import compiler_class.*;
-import java.io.*; 
-import java.util.*;
-import java.lang.*;
-
-
 public class Main{
 
 	public static void main( String args[] ){
 
-		keywords k = new keywords();
 		lexer l = new lexer(
-			"var led = (5 + 7 - 4) * 3\n" +  
-    	    "loop(true){\n" +
-	        "output(led, HIGH)\n" +
-        	"output(serial, \"On\")\n" + 
-    	    "wait(1)\n" +
-	        "output(led, LOW)\n" +
-        	"output(serial, \"Off\")\n" +
-    	    "wait(1)\n" +
-	        "}" +
+			"var led  = 13    \n" +  
 			'\0');		
-	
-		ArrayList<token> token_array = new ArrayList<token>();
+		
+		parser p = new parser(l);
 
-		while( l.get_current_char() != '\0' ){
 
-			if( l.get_current_char() == ' ' || l.get_current_char() == '\n' ){
+		errors err_list = new errors();
 
-				l.next_char();
+		ast_l ast_list = new ast_l();
 
-			}
-			
-			if( l.is_alpha_numeric(l.get_current_char()) ){
+		p.get_next_token();
 
-				String identifier = l.get_identifier();
+		while( !p.get_current_token().get_type().equals("T_NULL") ){
 
-				if( k.is_num(identifier) ){
-					
-					token_array.add(new token("T_CONSTANT", identifier));
+			if( p.get_current_token().get_type().equals("T_KEYWORD") ){
 
-				}else if( k.is_keyword(identifier) ){
+				if( p.get_current_token().get_content().equals("var")){
 
-					token_array.add(new token("T_KEYWORD", identifier));
+					ast node = p.parse_var_def(err_list, ast_list);
 
-				}else{
-					
-					token_array.add(new token("T_IDENTIFIER", identifier));
+					if(node != null){
+
+						ast_list.add_new_ast(node);
+
+					}
 
 				}
+
 			}
 
-			switch(l.get_current_char()){
-					case '(' : {
-								token_array.add(new token("T_LPAREN", String.valueOf(l.get_current_char())));
-								break;
-						   }
-					case ')' : {
-								token_array.add(new token("T_RPAREN", String.valueOf(l.get_current_char())));
-								break;
-						   }
-				case '{' : {
-								token_array.add(new token("T_LBRACE", String.valueOf(l.get_current_char())));
-								break;
-						   }
+			if( p.get_current_token().get_type().equals("T_NULL") ){
+				break;
+			}
 
-			
-				case '}' : {
-								token_array.add(new token("T_RBRACE", String.valueOf(l.get_current_char())));
-								break;
-						   }
-				case '+' : {
-								token_array.add(new token("T_PLUS", String.valueOf(l.get_current_char())));
-								break;
-						   }
-				case '-' : {
-								token_array.add(new token("T_MINUS", String.valueOf(l.get_current_char())));
-								break;
-						   }
-				case '*' : {
-								token_array.add(new token("T_ASTERIX", String.valueOf(l.get_current_char())));
-								break;
-						   }
-				case '/' : {
-								token_array.add(new token("T_FSLASH", String.valueOf(l.get_current_char())));
-								break;
-						   }
-				case '%' : {
-								token_array.add(new token("T_MOD", String.valueOf(l.get_current_char())));
-								break;
-						   }
-				case '=' : {
-								token_array.add(new token("T_EQUAL", String.valueOf(l.get_current_char())));
-								break;
-						   }
-				case '>' : {
-								token_array.add(new token("T_GREATER", String.valueOf(l.get_current_char())));
-								break;
-							   }
-				case '<' : {
-								token_array.add(new token("T_LESSER", String.valueOf(l.get_current_char())));
-								break;
-						   }
-				case ',' : {
-								token_array.add(new token("T_COMMA", String.valueOf(l.get_current_char())));
-								break;
-						   }
-				case '"' : {
-								String string_identifier = l.get_string();
-								token_array.add(new token("T_STRING", string_identifier));
-								break;
-						   }
-				
-				
+			if( p.get_current_token().get_type() == "T_NEWLINE" ){
+
+				p.parse_newline(err_list, ast_list);
+
 			}
 			
-			l.next_char();
+			p.get_next_token();
+		
+		}
+
+		if(err_list.get_errors_count() > 0){
+
+			err_list.print_errors();
+
+		}else{
+
+			ast_list.print_ast();
 
 		}
 
-		for(var token : token_array){
-			System.out.println(token.get_type() + " --> " + token.get_content());
-		}
 
 	}
-
 }
 

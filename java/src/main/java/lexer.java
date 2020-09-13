@@ -1,76 +1,5 @@
-
 import java.util.regex.*; 
 import java.util.*;
-import java.util.List;
-
-
-class keywords{
-
-	private static String KEYWORDS[] = {
-	    "var",
-	    "loop",
-		"if",
-    	"else",
-	    "in",
-    	"or",
-	    "and",
-    	"serial",
-    	"HIGH",
-    	"LOW",
-    	"return",
-    	"fun",
-    	"break",
-    	"true",
-    	"false",
-		"LED",
-		"SPEAKER",
-		"LIGHT",
-		"MIC",
-		"TEMPARATURE",
-		"ACCELEROMETER",
-		"GYROSCOPE",
-		"AIR_PRESSURE",
-		"HUMIDITY",
-		};
-
-	private static ArrayList<String> KEYWORD_LIST = new ArrayList<String>(Arrays.asList(KEYWORDS));
-
-	private boolean search_keyword(String identifier){
-	
-		boolean FLAG = false;
-
-		for(int i = 0; i < 24; i++){
-			
-			if(KEYWORDS[i].equals(identifier)){
-				return true;	
-			}
-
-		}
-
-		return false;
-
-	}
-
-	public boolean is_keyword(String identifier){
-
-		 return this.search_keyword(identifier);
-
-	}
-
-	public boolean is_num(String str) {
-	    if (str == null) {
-	        return false;
-	    }
-	    try {
-	        double d = Double.parseDouble(str);
-	    } catch (NumberFormatException e) {
-	        return false;
-	    }
-	    return true;
-	}
-
-}
-
 
 class lexer{
 
@@ -92,6 +21,11 @@ class lexer{
 		this.current_char = this.code[this.index];
 
 	}
+
+	public lexer(){
+
+	}
+
 
 	public void next_char(){
 
@@ -163,30 +97,27 @@ class lexer{
         return m.matches();
     }
 
-}
-
-class token{
-	
-	private String type;
-	private String content;
-
-	public token(String type, String content){
-
-		this.type = type;
-		this.content = content;
-
+	//getters and setters
+	public void set_code(char code[]){
+		this.code = code;
 	}
 
-	public String get_type(){
-
-		return this.type;
-
+	public char[] get_code(){
+		return this.code;
 	}
 
-	public String get_content(){
+	public void set_index(int index){
+		this.index = index;
+	}
 
-		return this.content;
+	public int get_index(){
+		return this.index;
+	}
 
+	public void set_current_char(char c){
+		this.current_char = c;
 	}
 
 }
+
+
