@@ -30,6 +30,14 @@ class keywords{
 		"HUMIDITY",
 		};
 
+	private static String BUILTIN_FUNCTION[] = {
+		"output",
+		"input",
+		"wait",
+	};
+
+	private static ArrayList<String> BUILTIN_FUNCTION_LIST = new ArrayList<String>(Arrays.asList(BUILTIN_FUNCTION));
+
 	private static ArrayList<String> KEYWORD_LIST = new ArrayList<String>(Arrays.asList(KEYWORDS));
 
 	private boolean search_keyword(String identifier){
@@ -49,6 +57,20 @@ class keywords{
 	public boolean is_keyword(String identifier){
 
 		 return this.search_keyword(identifier);
+
+	}
+
+	public boolean is_builtin_function( String identifier ){
+
+		for(String i : BUILTIN_FUNCTION_LIST ){
+
+			if(i.equals(identifier)){
+				return true;
+			}
+
+		}
+
+		return false;
 
 	}
 

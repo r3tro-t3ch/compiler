@@ -381,19 +381,45 @@ class parser{
 				return null;
 			}
 
-			this.get_next_token();
+			t = this.peek_next_token();
 
-			if( !this.eat(this.get_current_token(), "T_CONSTANT", err_list, list.get_ast_list_count())){
-				error_flag = true;
-				return null;
-			}
+			if(t.get_type().equals("T_CONSTANT")){
+				
+				this.get_next_token();
 
-			node.set_var_def_var_content(get_current_token().get_content());
+			
+				if( !this.eat(this.get_current_token(), "T_CONSTANT", err_list, list.get_ast_list_count())){
+				
+					error_flag = true;
+					return null;
+			
+				}
 
-			node.set_ast_node_index(list.get_ast_list_count());
+				node.set_var_def_var_content(get_current_token().get_content());
 
-			if(!error_flag){
-				return node;
+				node.set_ast_node_index(list.get_ast_list_count());
+
+				if(!error_flag){
+					return node;
+				}
+
+			}else if(t.get_type().equals("T_IDENTIFIER")){
+
+				this.get_next_token();
+
+				if( !this.eat(this.get_current_token(), "T_IDENTIFIER", err_list, list.get_ast_list_count())){
+					error_flag = true;
+					return null;
+				}
+
+				node.set_var_def_var_content(get_current_token().get_content());
+
+				node.set_ast_node_index(list.get_ast_list_count());
+
+				if(!error_flag){
+					return node;
+				}
+			
 			}
 
 		}else{
@@ -418,4 +444,286 @@ class parser{
 		return null;
 
 	}
+
+	public ast parse_function_call(errors err_list, ast_l list){
+
+		keywords k = new keywords();
+
+		boolean error_flag = false;
+
+		ast node = new ast("");
+
+		if( !this.eat(get_current_token(), "T_IDENTIFIER", err_list, list.get_ast_list_count()) ){
+
+			error_flag = true;
+			return null;
+
+		}
+
+
+		if( k.is_builtin_function(this.get_current_token().get_content()) ){
+
+			node = new ast("AST_BUILTIN_FUNCTION_CALL");
+
+			if( get_current_token().get_content().equals("output") ){
+
+				node.set_function_name(get_current_token().get_content());
+
+				this.get_next_token(); //(
+
+				if( !this.eat(get_current_token(), "T_LPAREN", err_list, list.get_ast_list_count()) ){
+
+					error_flag = true;
+					return null;
+
+				}
+
+				//first arguement
+
+				token t = peek_next_token();
+
+				this.get_next_token();
+	
+				if( !this.eat(this.get_current_token(), "T_KEYWORD", err_list, list.get_ast_list_count() )){
+	
+					error_flag = true;
+					return null;
+
+				}
+
+				function_arg arg = new function_arg(this.get_current_token().get_content(), this.get_current_token().get_type());
+
+				node.add_function_arg(arg);
+
+				//comma
+				
+				this.get_next_token();
+
+				if( !this.eat(get_current_token(), "T_COMMA", err_list, list.get_ast_list_count()) ){
+
+					error_flag = false;
+					return null;
+
+				}
+
+				//second arguement
+				t = peek_next_token();
+
+				if( t.get_type().equals("T_CONSTANT") ){
+
+					this.get_next_token();
+	
+					if( !this.eat(this.get_current_token(), "T_CONSTANT", err_list, list.get_ast_list_count() )){
+	
+						error_flag = true;
+						return null;
+
+					}
+
+					arg = new function_arg(this.get_current_token().get_content(), this.get_current_token().get_type());
+
+					node.add_function_arg(arg);
+
+				}else if( t.get_type().equals("T_IDENTIFIER") ){
+
+					this.get_next_token();
+	
+					if( !this.eat(this.get_current_token(), "T_IDENTIFIER", err_list, list.get_ast_list_count() )){
+	
+						error_flag = true;
+						return null;
+
+					}
+
+					arg = new function_arg(this.get_current_token().get_content(), this.get_current_token().get_type());
+
+					node.add_function_arg(arg);
+
+				}else if( t.get_type().equals("T_KEYWORD") ){
+
+					this.get_next_token();
+	
+					if( !this.eat(this.get_current_token(), "T_KEYWORD", err_list, list.get_ast_list_count() )){
+	
+						error_flag = true;
+						return null;
+
+					}
+
+					arg = new function_arg(this.get_current_token().get_content(), this.get_current_token().get_type());
+
+					node.add_function_arg(arg);
+
+				}
+
+			}else if( get_current_token().get_content().equals("input") ){
+
+				node.set_function_name(get_current_token().get_content());
+
+				this.get_next_token(); //(
+
+				if( !this.eat(get_current_token(), "T_LPAREN", err_list, list.get_ast_list_count()) ){
+
+					error_flag = true;
+					return null;
+
+				}
+
+				//first arguement
+
+				this.get_next_token();
+	
+				if( !this.eat(this.get_current_token(), "T_KEYWORD", err_list, list.get_ast_list_count() )){
+	
+					error_flag = true;
+					return null;
+
+				}
+
+				function_arg arg = new function_arg(this.get_current_token().get_content(), this.get_current_token().get_type());
+
+				node.add_function_arg(arg);
+
+				
+			}else if( get_current_token().get_content().equals("wait")){
+
+				node.set_function_name(get_current_token().get_content());
+
+				this.get_next_token(); //(
+
+				if( !this.eat(get_current_token(), "T_LPAREN", err_list, list.get_ast_list_count()) ){
+
+					error_flag = true;
+					return null;
+
+				}
+
+				//first arguement
+
+				token t = peek_next_token();
+
+				if( t.get_type().equals("T_CONSTANT") ){
+
+					this.get_next_token();
+	
+					if( !this.eat(this.get_current_token(), "T_CONSTANT", err_list, list.get_ast_list_count() )){
+	
+						error_flag = true;
+						return null;
+
+					}
+
+					function_arg arg = new function_arg(this.get_current_token().get_content(), this.get_current_token().get_type());
+
+					node.add_function_arg(arg);
+
+				}else if( t.get_type().equals("T_IDENTIFIER") ){
+
+					this.get_next_token();
+	
+					if( !this.eat(this.get_current_token(), "T_IDENTIFIER", err_list, list.get_ast_list_count() )){
+	
+						error_flag = true;
+						return null;
+
+					}
+
+					function_arg arg = new function_arg(this.get_current_token().get_content(), this.get_current_token().get_type());
+
+					node.add_function_arg(arg);
+
+				}
+			}
+			
+			get_next_token();
+
+			if( !this.eat(get_current_token(), "T_RPAREN", err_list, list.get_ast_list_count()) ){
+
+				error_flag = true;
+				return null;
+
+			}
+
+		}//implement user defined function call
+
+		node.set_ast_node_index(list.get_ast_list_count());
+
+		if( error_flag == false ){
+
+			return node;
+
+		}
+
+		return null;
+
+	}
+	
+	public ast parse_var_assignment( errors err_list, ast_l list){
+
+		ast node = new ast("AST_VAR_ASSIGNMENT");
+
+		System.out.println("here");
+
+		boolean error_flag = false;
+
+		if( !this.eat(get_current_token(), "T_IDENTIFIER", err_list, list.get_ast_list_count()) ){
+
+			error_flag = true;
+			return null;
+
+		}
+
+		node.set_var_name(get_current_token().get_content());
+
+		this.get_next_token(); // =
+
+		if( !this.eat(get_current_token(), "T_EQUAL", err_list, list.get_ast_list_count()) ){
+
+			error_flag = true;
+			return null;
+
+		}
+
+		token t = peek_next_token();
+
+		if( t.get_type().equals("T_CONSTANT") ){
+
+			this.get_next_token();
+
+			if( !this.eat( get_current_token(), "T_CONSTANT", err_list, list.get_ast_list_count() ) ){
+
+				error_flag = true;
+				return null;
+
+			}
+
+			node.set_ast_node_index( list.get_ast_list_count() );
+
+		}else if( t.get_type().equals("T_IDENTIFIER") ){
+
+			this.get_next_token();
+
+			if( !this.eat( get_current_token(), "T_IDENTIFIER", err_list, list.get_ast_list_count() ) ){
+
+				error_flag = true;
+				return null;
+
+			}
+
+			node.set_ast_node_index( list.get_ast_list_count() );
+
+		}else{
+			this.parse_newline(err_list, list);
+		}
+
+		if( error_flag == false ){
+
+			return node;
+
+		}
+
+		return null;
+
+	}
+
 }

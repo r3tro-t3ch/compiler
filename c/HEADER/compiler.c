@@ -537,13 +537,13 @@ ast* new_ast(char *type){
 	//variable definition and assignment
 	_ast->var_def_var_name = (void *) 0;
 	_ast->var_def_var_content = (void *) 0;
+	_ast->var_def_var_type = (void *) 0;
 	_ast->var_def_var_content_expr = (void *) 0;
-
-
 
 	//variable assignment
 	_ast->var_name = (void *) 0;
 	_ast->var_content = (void *) 0;
+	_ast->var_type = (void *) 0;
 
 	return _ast;
 
@@ -693,23 +693,70 @@ ast* parse_var_def( parser *p, error_list *err_list, ast_l* ast_list){
 			error_flag = 1;
 			return NULL;
 		}
+
+		t = peek_next_token(p);
+
+		if( strncmp(t->type,"T_CONSTANT", 10) == 0 ){
+
+			get_next_token(p);
 	
-		get_next_token(p);
-		if(parser_eat(get_current_token(p), "T_CONSTANT", err_list, ast_list->line_count) == 0){
-			error_flag = 1;
-			return NULL;
-		}
+			if(parser_eat(get_current_token(p), "T_CONSTANT", err_list, ast_list->line_count) == 0){
+				error_flag = 1;
+				return NULL;
+			}
 
-		a->var_def_var_content = get_current_token(p)->content;
+			a->var_def_var_content = get_current_token(p)->content;
+
+			a->var_def_var_type = get_current_token(p)->type;
+
+			a->ast_node_index = ast_list->line_count;
+
+			if(error_flag == 0){
 		
-		a->ast_node_index = ast_list->line_count;
+				return a;
 
-		if(error_flag == 0){
+			}
+		}else if( strncmp(t->type, "T_IDENTIFIER", 12) == 0 ){
 		
-			return a;
+			get_next_token(p);
+			if(parser_eat(get_current_token(p), "T_IDENTIFIER", err_list, ast_list->line_count) == 0){
+				error_flag = 1;
+				return NULL;
+			}
+
+			a->var_def_var_content = get_current_token(p)->content;
+		
+			a->var_def_var_type = get_current_token(p)->type;
+
+			a->ast_node_index = ast_list->line_count;
+
+			if(error_flag == 0){
+		
+				return a;
+
+			}	
+		}else if( strncmp(t->type, "T_STRING", 9) == 0){
+
+			get_next_token(p);
+			if(parser_eat(get_current_token(p), "T_STRING", err_list, ast_list->line_count) == 0){
+				error_flag = 1;
+				return NULL;
+			}
+
+			a->var_def_var_content = get_current_token(p)->content;
+		
+			a->var_def_var_type = get_current_token(p)->type;
+
+			a->ast_node_index = ast_list->line_count;
+
+			if(error_flag == 0){
+		
+				return a;
+
+			}
 
 		}
-
+		
 	}else{
 					
 		t = peek_next_token(p);
@@ -793,6 +840,7 @@ ast* parse_var_assignment(parser *p,error_list *err_list,  ast_l *ast_list){
 
 		node->ast_node_index = ast_list->line_count;
 
+
 	}else if(strncmp( t->type, "T_IDENTIFIER", 12 ) == 0){
 
 		get_next_token(p); // variable identifer value
@@ -806,6 +854,10 @@ ast* parse_var_assignment(parser *p,error_list *err_list,  ast_l *ast_list){
 
 		node->ast_node_index = ast_list->line_count;
 				
+	}else{
+
+		parse_function_call(p, err_list, ast_list);
+
 	}
 
 	
@@ -840,9 +892,10 @@ ast* parse_function_call(parser *p,error_list *err_list,  ast_l *ast_list){
 		if( strncmp(get_current_token(p)->content, "output",6) == 0 ){
 
 
+			node->function_name = get_current_token(p)->content;
+
 			get_next_token(p); // (
 
-			node->function_name = get_current_token(p)->content;
 
 			if( parser_eat(get_current_token(p), "T_LPAREN", err_list, ast_list->line_count ) == 0){
 

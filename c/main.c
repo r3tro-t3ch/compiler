@@ -10,22 +10,15 @@
 int main(int argc, char *argv[]){
 
 	lexer *l = new_lexer(
-		"var led\n"
-		"var l = 13\n"
-		"led = l\n"
-		"var d = 1\n"
-		"output(d, HIGH)\n"
-		"wait(1)"
-		"output(d, LOW)\n"
-		"wait(1)\n"
-		"output(13, HIGH)\n"
-		"wait(1)\n"
-		"output(13, LOW)\n"
-		"wait(1)\n"
-		"output(led, HIGH)\n"
-		"wait(1)\n"
-		"output(led, LOW)\n"
-		"wait(1)\n"
+		//"var led 12\n"
+		"var l=  1\n"
+		"var a \n"
+		"a = l\n"
+		//"led = \n" 
+		//"output(led, HIGH)\n"
+		//"wait(1)\n"
+		//"output(led, LOW)\n"
+		//"wait(1)\n"
 		"\0" );
 
 	parser *p = new_parser(l);
@@ -78,6 +71,8 @@ int main(int argc, char *argv[]){
 
 				}
 
+			}else{
+				parse_newline(p, err_list, ast_list);
 			}
 
 			

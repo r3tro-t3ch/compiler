@@ -3,7 +3,7 @@
 #include "compiler.h" 
 
 #include <stdio.h>
-
+#include <string.h>
 
 //semantic analyzer
 //void run_semantic_analysis(ast_l *ast_list, error_list *err_list, symbol_table *table){
@@ -107,3 +107,23 @@ symbol *new_s = new_var_symbol(node->var_name, node->var_content,"T_CONSTANT");
 */
 
 //}
+
+
+//semantic analyzer
+/*void run_semantic_analysis(ast_l *ast_list, error_list *err_list){
+
+	ast *ast_sem = ast_list->root_node;
+
+	if( strncmp(ast_sem->type, "AST_VAR_ASSIGNMENT", 19) == 0){
+		
+		
+
+	}
+
+	
+	while(ast_list->last_node != NULL){
+
+	}
+
+
+}*/

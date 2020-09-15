@@ -10,6 +10,7 @@ class ast{
 	private String function_name;
 	private ArrayList<function_arg> args_list;
 
+
 	//variable definition and assignment
 	private String var_def_var_name;
 	private String var_def_var_content;
@@ -22,6 +23,7 @@ class ast{
 	public ast(String type){
 
 		this.type = type;
+		args_list = new ArrayList<function_arg>();
 
 	}
 
@@ -139,6 +141,11 @@ class function_arg{
 
 	private String arg_name;
 	private String arg_type;
+
+	public function_arg(String name, String type){
+		this.arg_name = name;
+		this.arg_type = type;
+	}
 
 	public String get_arg_name(){
 		return this.arg_name;
