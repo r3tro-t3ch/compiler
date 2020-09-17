@@ -10,15 +10,14 @@
 int main(int argc, char *argv[]){
 
 	lexer *l = new_lexer(
-		//"var led 12\n"
-		"var l=  1\n"
-		"var a \n"
+		"var l = 1 + a\n"
+		/*"var a \n"
 		"a = l\n"
-		//"led = \n" 
-		//"output(led, HIGH)\n"
-		//"wait(1)\n"
-		//"output(led, LOW)\n"
-		//"wait(1)\n"
+		"var led  = a\n"
+		"output(led, HIGH)\n"
+		"wait(1)\n"
+		"output(led, LOW)\n"
+		"wait(1)\n"*/
 		"\0" );
 
 	parser *p = new_parser(l);

@@ -4,7 +4,8 @@
 #include <stdlib.h>
 #include "error.h"
 #include "symbol_table.h"
-
+#include "token.h"
+#include "expression.h"
 
 #define true 1
 #define false 0
@@ -43,17 +44,6 @@ char* get_string(lexer *l);
 //to get identifier
 char* get_identifier(lexer *l);
 
-
-typedef struct TOKEN{
-
-	char *type;
-	char *content;
-	
-} token;
-
-//creating a new token
-token* new_token(char *type, char *content);
-
 //char to string
 char* char_to_str(char a);
 
@@ -91,16 +81,6 @@ typedef struct AST{
 	char *type;
 	size_t ast_node_index;
 
-	//ast constant
-	char *constant_value;
-	struct AST *l_operator;
-	struct AST *r_operator;
-
-	//operator
-	char *operator_value;
-	struct AST *l_operand;
-	struct AST *r_operand;
-
 	//function call
 	char *function_name;
 	function_args_list *args_list;
@@ -108,14 +88,13 @@ typedef struct AST{
 
 	//variable definition and assignment
 	char *var_def_var_name;
-	char *var_def_var_content;
 	char *var_def_var_type;
-	struct AST *var_def_var_content_expr;
+	expr_ast *var_def_var_expr;
 	
 	//variable assignment
 	char *var_name;
-	char *var_content;
 	char *var_type;
+	expr_ast *var_expr;
 
 } ast;
 
@@ -166,6 +145,9 @@ void skip_current_line(parser *p);
 int parser_eat(token *t, char *type, error_list *err_list, size_t code_size);
 
 //parse given statements
+
+//parse expressions
+void *parse_expressions(parser *p,/* error_list *err_list,*/ ast_l *ast_list);
 
 //parse variable declaration and definition
 ast* parse_var_def(parser *p,error_list *err_list,  ast_l *ast_list);

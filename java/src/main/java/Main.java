@@ -3,7 +3,7 @@ public class Main{
 	public static void main( String args[] ){
 
 		lexer l = new lexer(
-			"var led = 1  \n" +  
+			"var led = 12\n" +  
 			"var l = led\n" +
 			"var a\n" +
 			"a = l\n" +

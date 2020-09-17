@@ -5,7 +5,8 @@
 #include <stdio.h>
 #include <ctype.h>
 #include "symbol_table.h"
-
+#include "token.h"
+#include "expression.h"
 
 char *KEYWORD[KEYWORD_LEN] =  {
 	"var",
@@ -134,15 +135,6 @@ char* get_identifier(lexer *l){
 
 	return identifier;
 
-}
-
-
-//creating a new token
-token* new_token(char *type, char *content){
-	token *t = calloc(1, sizeof(token));
-	t->type = type;
-	t->content = content;
-	return t;
 }
 
 //char to string
@@ -507,7 +499,6 @@ token* peek_next_token(parser *p){
 
 }
 
-
 //creates new ast
 ast* new_ast(char *type){
 
@@ -519,16 +510,6 @@ ast* new_ast(char *type){
 	_ast->type = type;
 	_ast->ast_node_index = 0;
 
-	//ast constant
-	_ast->constant_value = NULL;
-	_ast->l_operator = NULL;
-	_ast->r_operator = NULL;
-
-	//ast operator
-	_ast->operator_value = NULL;
-	_ast->l_operand = NULL;
-	_ast->r_operand = NULL;
-
 	//function call
 	_ast->function_name = (void *) 0;
 	_ast->args_list = (void *) 0;
@@ -536,14 +517,13 @@ ast* new_ast(char *type){
 
 	//variable definition and assignment
 	_ast->var_def_var_name = (void *) 0;
-	_ast->var_def_var_content = (void *) 0;
 	_ast->var_def_var_type = (void *) 0;
-	_ast->var_def_var_content_expr = (void *) 0;
+	_ast->var_def_var_expr = (void *) 0;
 
 	//variable assignment
 	_ast->var_name = (void *) 0;
-	_ast->var_content = (void *) 0;
 	_ast->var_type = (void *) 0;
+	_ast->var_expr = (void *) 0;
 
 	return _ast;
 
@@ -661,6 +641,36 @@ int parser_eat(token *t, char *type, error_list *err_list, size_t code_size){
 
 }
 
+//parse expressions
+void *parse_expressions(parser *p/*, error_list *err_list,*/ ,ast_l *ast_list){
+
+	//expr_ast *expr_node = new_expression_ast();
+
+	token_list *list = new_token_list();
+
+	while(is_expression_token(get_current_token(p)) == 1){
+
+		add_new_token(list, get_current_token(p));
+
+		get_next_token(p);
+
+		fprintf(stdout,"%s, %s \n", get_current_token(p)->content, get_current_token(p)->type);
+
+	}
+
+	//token *t = list->first_token;
+
+	/*while(t->next_token != NULL){
+
+		fprintf(stdout,"%s , %s", t->content, t->type );
+
+		t = t->next_token;
+	}*/
+	
+	return 0;
+
+}
+
 //parse var declaration and definition
 ast* parse_var_def( parser *p, error_list *err_list, ast_l* ast_list){
 
@@ -689,6 +699,9 @@ ast* parse_var_def( parser *p, error_list *err_list, ast_l* ast_list){
 		get_next_token(p);
 
 		a->type = "AST_VAR_DEF_ASSIGNMENT";
+
+	//	parse_expressions(p, ast_list);
+
 		if(parser_eat(get_current_token(p), "T_EQUAL", err_list, ast_list->line_count) == 0){
 			error_flag = 1;
 			return NULL;
@@ -705,7 +718,7 @@ ast* parse_var_def( parser *p, error_list *err_list, ast_l* ast_list){
 				return NULL;
 			}
 
-			a->var_def_var_content = get_current_token(p)->content;
+			//a->var_def_var_content = get_current_token(p)->content;
 
 			a->var_def_var_type = get_current_token(p)->type;
 
@@ -724,7 +737,7 @@ ast* parse_var_def( parser *p, error_list *err_list, ast_l* ast_list){
 				return NULL;
 			}
 
-			a->var_def_var_content = get_current_token(p)->content;
+			//a->var_def_var_content = get_current_token(p)->content;
 		
 			a->var_def_var_type = get_current_token(p)->type;
 
@@ -743,7 +756,7 @@ ast* parse_var_def( parser *p, error_list *err_list, ast_l* ast_list){
 				return NULL;
 			}
 
-			a->var_def_var_content = get_current_token(p)->content;
+			//a->var_def_var_content = get_current_token(p)->content;
 		
 			a->var_def_var_type = get_current_token(p)->type;
 
@@ -777,7 +790,7 @@ ast* parse_var_def( parser *p, error_list *err_list, ast_l* ast_list){
 
 		}
 
-	}	
+	}
 
 	return NULL;
 
@@ -1197,3 +1210,4 @@ ast* parse_function_call(parser *p,error_list *err_list,  ast_l *ast_list){
 	return NULL;
 
 }
+
