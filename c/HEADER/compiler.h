@@ -89,11 +89,13 @@ typedef struct AST{
 	//variable definition and assignment
 	char *var_def_var_name;
 	char *var_def_var_type;
+	char *var_def_var_content;
 	expr_ast *var_def_var_expr;
 	
 	//variable assignment
 	char *var_name;
 	char *var_type;
+	char *var_content;
 	expr_ast *var_expr;
 
 } ast;
@@ -160,5 +162,8 @@ ast* parse_var_assignment(parser *p,error_list *err_list,  ast_l *ast_list);
 
 //parse function call
 ast* parse_function_call(parser *p,error_list *err_list,  ast_l *ast_list);
+
+//parse statements
+ast_l* parse_statements(parser *p, error_list *err_list);
 
 #endif

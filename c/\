@@ -1,0 +1,6 @@
+#ifndef EVALUATOR_H
+#define EVALUATOR_H
+
+void visitor_evaluate(ast_l *ast_list);
+
+#endif
