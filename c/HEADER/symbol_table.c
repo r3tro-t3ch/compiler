@@ -1,5 +1,3 @@
-#include "symbol_table.h"
-#include <ctype.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -71,24 +69,21 @@ void add_new_symbol(symbol_table *table, symbol *s){
 //print all symbol
 void print_symbol_table(symbol_table *table){
 
+	if(table == NULL){
+		fprintf(stdout,"table null\n");
+	}
+
 	symbol *s = table->first_symbol;
 
-	fprintf(stdout, "NAME: %s ,TYPE: %s , VALUE: %s, DATA_TYPE: %s\n",
-					s->name,
-					s->type,
-					s->value,
-					s->data_type
-	);
+	while(s != NULL){
 
-	while(s->next_symbol != NULL){
-
-		s = s->next_symbol;
 		fprintf(stdout, "NAME: %s ,TYPE: %s , VALUE: %s, DATA_TYPE: %s\n",
 					s->name,
 					s->type,
 					s->value,
 					s->data_type
 		);
+		s = s->next_symbol;
 	}
 
 }
@@ -104,32 +99,21 @@ symbol* search_symbol(symbol_table *table, char *name){
 
 	symbol* ret_symbol = calloc(1, sizeof(symbol));
 
-	if(strncmp(temp->name, name, len) == 0){
+	while(temp != NULL){
 
-		ret_symbol->name = temp->name;
-		ret_symbol->type = temp->type;
-		ret_symbol->value = temp->value;
-		ret_symbol->data_type = temp->value;
-		search_flag = true;
-		return ret_symbol;
-
-	}
-
-	while(temp->next_symbol != NULL){
-
-		temp = temp->next_symbol;
 
 		if(strncmp(temp->name, name, len) == 0){
 
 			ret_symbol->name = temp->name;
 			ret_symbol->type = temp->type;
 			ret_symbol->value = temp->value;
-			ret_symbol->data_type = temp->value;
+			ret_symbol->data_type = temp->data_type;
 			search_flag = true;
 			break;
 
 		}
 
+		temp = temp->next_symbol;
 	}
 
 	if(search_flag == true){
@@ -137,6 +121,7 @@ symbol* search_symbol(symbol_table *table, char *name){
 		return ret_symbol;
 
 	}
+
 
 	return NULL; 
 
@@ -150,6 +135,7 @@ int update_symbol(symbol_table *table, symbol *s){
 		return 0;
 
 	}
+
 	size_t len = strlen(s->name);
 
 	symbol *temp = table->first_symbol;

@@ -1,0 +1,6 @@
+var led1 = 11
+var led2 = 12
+var led3 = 13
+output(led1,HIGH)
+output(led2,HIGH)
+output(led3,HIGH)

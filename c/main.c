@@ -10,8 +10,14 @@
 int main(int argc, char *argv[]){
 
 	lexer *l = new_lexer(
-		"var led = 11\n"
-		"output(led, HIGH)\n"
+		"var a = 10\n"
+		"var b = 11\n"
+		"var c = 12\n"
+		"var d = 13\n"
+		"output(a, HIGH)\n"
+		"output(b, HIGH)\n"
+		"output(c, HIGH)\n"
+		"output(d,HIGH)\n"
 		"\0" );
 
 	parser *p = new_parser(l);
@@ -27,7 +33,7 @@ int main(int argc, char *argv[]){
 	}else{
 
 		//print_ast(ast_list);
-		visitor_evaluate(ast_list);
+		visitor_evaluate(ast_list, err_list);
 		//print_symbol_table(table);
 
 	}

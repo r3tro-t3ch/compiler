@@ -1,7 +1,7 @@
 token.java
  token
-Main.java
- Main
+parser.java
+ parser
 lexer.java
  lexer
 ast.java
@@ -13,5 +13,5 @@ error.java
  errors
 keywords.java
  keywords
-parser.java
- parser
+Main.java
+ Main

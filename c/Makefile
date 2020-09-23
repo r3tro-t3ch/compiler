@@ -2,8 +2,8 @@
 HEADER_CODE:= HEADER/*.c  HEADER/*.h
 MAIN:= main.c
 TARGET:= compiler
-CFLAGS:= -Wall -g -s #-Werror 
-DFLAGS:= --leak-check=full -s
+CFLAGS:= -Wall -g #-s #-Werror 
+DFLAGS:= --leak-check=full -s -v
 BAUDRATE:=115200
 PORT:=/dev/ttyACM0
 ASSEMBLY_CODE:=code.asm
@@ -11,7 +11,6 @@ HEX_CODE:=code.hex
 
 build:
 	gcc ${HEADER_CODE} ${MAIN} ${CFLAGS}-o ${TARGET}
-	./${TARGET}
 	
 clean:
 	rm ${TARGET}

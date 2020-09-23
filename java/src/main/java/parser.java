@@ -726,4 +726,85 @@ class parser{
 
 	}
 
+	public ast_l parse_statements(){
+	
+		errors err_list = new errors();
+
+		ast_l ast_list = new ast_l();
+
+		this.get_next_token();
+
+		while( !this.get_current_token().get_type().equals("T_NULL") ){
+
+			if( this.get_current_token().get_type().equals("T_KEYWORD") ){
+
+				if( this.get_current_token().get_content().equals("var")){
+
+					ast node = this.parse_var_def(err_list, ast_list);
+
+					if(node != null){
+
+						ast_list.add_new_ast(node);
+
+					}
+
+				}
+
+			}else if(this.get_current_token().get_type().equals("T_IDENTIFIER") ){
+
+				token t = this.peek_next_token();
+
+				if( t.get_type().equals("T_EQUAL") ){
+
+					ast node = this.parse_var_assignment(err_list, ast_list);
+
+					if(node != null){
+
+						ast_list.add_new_ast(node);
+
+					}
+
+				}else if( t.get_type().equals("T_LPAREN") ){
+
+					ast node = this.parse_function_call(err_list, ast_list);
+
+					if(node != null){
+
+						ast_list.add_new_ast(node);
+
+					}
+
+				}else{
+					this.parse_newline(err_list, ast_list);
+				}
+
+			}
+
+			if( this.get_current_token().get_type().equals("T_NULL") ){
+				break;
+			}
+
+			if( this.get_current_token().get_type().equals("T_NEWLINE" )){
+
+				this.parse_newline(err_list, ast_list);
+
+			}
+			
+			this.get_next_token();
+		
+		}
+
+		if(err_list.get_errors_count() > 0){
+
+			err_list.print_errors();
+			return null;
+
+		}else{
+
+			return ast_list;
+
+		}
+
+
+	}
 }

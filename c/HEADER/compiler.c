@@ -123,14 +123,14 @@ char* get_identifier(lexer *l){
     next_char(l);
     while( isalnum( l-> current_char) ){
 
-	    identifier = realloc(identifier, strlen(identifier) + sizeof(char));
+	    identifier = realloc(identifier, i + sizeof(char));
         identifier[i] = l->current_char;
         i++;
         next_char(l);
  
      }
  
-     identifier = realloc(identifier, strlen(identifier) + sizeof(char));
+     identifier = realloc(identifier, i + sizeof(char));
      identifier[i] = '\0';
 
 	return identifier;
