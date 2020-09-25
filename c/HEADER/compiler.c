@@ -209,7 +209,7 @@ token* get_next_token(parser *p){
 		char *identifier = get_identifier(p->l);
 
 		if( isdigit(*identifier) ){
-				
+			
 			t = new_token("T_CONSTANT", identifier);
 			p->current_token = t;
 			return t;
@@ -720,6 +720,8 @@ ast* parse_var_def( parser *p, error_list *err_list, ast_l* ast_list){
 				return NULL;
 			}
 
+			a->type = "AST_VAR_DEF_ASSIGNMENT_CONSTANT";
+
 			a->var_def_var_content = get_current_token(p)->content;
 
 			a->var_def_var_type = get_current_token(p)->type;
@@ -738,6 +740,8 @@ ast* parse_var_def( parser *p, error_list *err_list, ast_l* ast_list){
 				error_flag = 1;
 				return NULL;
 			}
+
+			a->type = "AST_VAR_DEF_ASSIGNMENT_IDENTIFIER";
 
 			a->var_def_var_content = get_current_token(p)->content;
 		
@@ -853,6 +857,8 @@ ast* parse_var_assignment(parser *p,error_list *err_list,  ast_l *ast_list){
 
 		}
 
+		node->type = "AST_VAR_ASSIGNMENT_CONSTANT";
+
 		node->ast_node_index = ast_list->line_count;
 
 
@@ -866,6 +872,8 @@ ast* parse_var_assignment(parser *p,error_list *err_list,  ast_l *ast_list){
 			return NULL;
 
 		}
+
+		node->type = "AST_VAR_ASSIGNMENT_IDENTIFIER";
 
 		node->ast_node_index = ast_list->line_count;
 				
@@ -1137,9 +1145,12 @@ ast* parse_function_call(parser *p,error_list *err_list,  ast_l *ast_list){
 
 		}else if( strncmp(get_current_token(p)->content, "wait", 4) == 0 ){
 
+			node->function_name = get_current_token(p)->content;
+
 			get_next_token(p); // (
 
-			node->function_name = get_current_token(p)->content;
+			fprintf(stdout,"here\n");
+
 
 			if( parser_eat(get_current_token(p), "T_LPAREN", err_list, ast_list->line_count ) == 0){
 
@@ -1252,6 +1263,8 @@ ast_l* parse_statements(parser *p, error_list *err_list){
 
 			}else if( strncmp(t->type, "T_LPAREN", 8) == 0 ){
 
+		
+				fprintf(stdout, "%s \n", get_current_token(p)->content);
 				ast *node = parse_function_call(p, err_list, ast_list);
 
 				if( node != NULL ){
@@ -1278,7 +1291,7 @@ ast_l* parse_statements(parser *p, error_list *err_list){
 		}
 
 		get_next_token(p);
-
+		
 		
 	}
 	return ast_list;

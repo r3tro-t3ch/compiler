@@ -2,6 +2,64 @@
 #include <string.h>
 #include "symbol_table.h"
 #include <stdio.h>
+#include <ctype.h>
+
+//atmega328p general purpose register set
+static char *register_list[] = { 
+	"r16",
+	"r17",
+	"r18",
+	"r19",
+	"r20",
+	"r21",
+	"r22",
+	"r23",
+	"r24",
+	"r25",
+	"r26",
+	"r27",
+	"r28",
+	"r29",
+	"r30",
+	"r31",
+	"r32"
+};
+
+static size_t register_index = 0;
+
+size_t delay_code_flag = 0;
+
+//registers
+char* use_register(char *register_list[]){
+
+	if(register_index == GENERAL_PURPOSE_REGISTER_COUNT){
+		return NULL;
+	}
+
+	char *reg = register_list[register_index];
+
+	register_index++;
+
+	return reg;
+
+}
+
+//calculate delay
+/*size_t calculate_delay(size_t delay_parameter){
+
+	size_t delay_time;
+
+	if(delay_parameter == 1){
+
+		if(delay_parameter == 1){
+			return 60;
+		}
+
+	}else{
+
+	}
+
+}*/
 
 //visitor
 void visitor_evaluate(ast_l *ast_list, error_list* err_list){
@@ -12,13 +70,16 @@ void visitor_evaluate(ast_l *ast_list, error_list* err_list){
 
 	ast *t_ast = ast_list->root_node;
 
-	char *asm_code = calloc(1000, sizeof(char));
-
-	//char *temp_asm_code = calloc(1, sizeof(char));
+	char *code_init = calloc(200, sizeof(char));
+	char *asm_setup_code = calloc(1000, sizeof(char));
+	char *asm_main_code = calloc(2000, sizeof(char));
+	char *reset_code = calloc(200, sizeof(char));
+	char *delay_function = NULL;
+	char *timer_overflow_handler = calloc(200, sizeof(char));
 
 	while(t_ast != NULL){
 
-		if( strncmp(t_ast->type, "AST_VAR_DEF_ASSIGNMENT", 22) == 0){
+		if( strncmp(t_ast->type, "AST_VAR_DEF_ASSIGNMENT_CONSTANT", 22) == 0){
 			
 			s = new_var_symbol( t_ast->var_def_var_name,
 								t_ast->var_def_var_content,
@@ -36,7 +97,7 @@ void visitor_evaluate(ast_l *ast_list, error_list* err_list){
 					function_args *second_arg = t_ast->args_list->last_arg;
 				
 					if(strncmp(first_arg->arg_type,"T_IDENTIFIER",12) == 0){
-						
+					
 						if(strncmp(second_arg->arg_name,"HIGH", 4) == 0){
 
 							s = search_symbol(table, first_arg->arg_name);
@@ -45,29 +106,29 @@ void visitor_evaluate(ast_l *ast_list, error_list* err_list){
 							
 								if(strncmp(s->value,"13", 2) == 0){
 
-									strncat(asm_code,"\tsbi DDRB, 5\n", 14);
-									strncat(asm_code, "\tsbi PortB, 5\n", 15);
+									strncat(asm_setup_code,"\tsbi DDRB, 5\n", 14);
+									strncat(asm_main_code, "\tsbi PortB, 5\n", 15);
 				
 								}else if(strncmp(s->value,"12", 2) == 0){
 								
-									strncat(asm_code,"\tsbi DDRB, 4\n", 14);
-									strncat(asm_code, "\tsbi PortB, 4\n", 15);
+									strncat(asm_setup_code,"\tsbi DDRB, 4\n", 14);
+									strncat(asm_main_code, "\tsbi PortB, 4\n", 15);
 
 								}else if(strncmp(s->value,"11", 2) == 0){
 
-									strncat(asm_code,"\tsbi DDRB, 3\n", 14);
-									strncat(asm_code, "\tsbi PortB, 3\n", 15);
+									strncat(asm_setup_code,"\tsbi DDRB, 3\n", 14);
+									strncat(asm_main_code, "\tsbi PortB, 3\n", 15);
 
 								}else if(strncmp(s->value,"10", 2) == 0){
 								
-									strncat(asm_code,"\tsbi DDRB, 2\n", 14);
-									strncat(asm_code, "\tsbi PortB, 2\n", 15);
+									strncat(asm_setup_code,"\tsbi DDRB, 2\n", 14);
+									strncat(asm_main_code, "\tsbi PortB, 2\n", 15);
 
 								
 								}else if(strncmp(s->value,"9", 1) == 0){
 
-									strncat(asm_code,"\tsbi DDRB, 1\n", 14);
-									strncat(asm_code, "\tsbi PortB, 1\n", 15);
+									strncat(asm_setup_code,"\tsbi DDRB, 1\n", 14);
+									strncat(asm_main_code, "\tsbi PortB, 1\n", 15);
 
 								}else{
 									
@@ -96,13 +157,150 @@ void visitor_evaluate(ast_l *ast_list, error_list* err_list){
 								add_new_error(err_list,e);
 
 							}
-						}//implement LOW
+						}else if(strncmp(second_arg->arg_name,"LOW", 3) == 0){
+
+							//implement LOW
+
+							s = search_symbol(table, first_arg->arg_name);
+
+							if(s != NULL){
+							
+								if(strncmp(s->value,"13", 2) == 0){
+
+									strncat(asm_main_code, "\tcbi PortB, 5\n", 15);
+				
+								}else if(strncmp(s->value,"12", 2) == 0){
+								
+									strncat(asm_main_code, "\tcbi PortB, 4\n", 15);
+
+								}else if(strncmp(s->value,"11", 2) == 0){
+
+									strncat(asm_main_code, "\tcbi PortB, 3\n", 15);
+
+								}else if(strncmp(s->value,"10", 2) == 0){
+								
+									strncat(asm_main_code, "\tcbi PortB, 2\n", 15);
+
+								
+								}else if(strncmp(s->value,"9", 1) == 0){
+
+									strncat(asm_main_code, "\tcbi PortB, 1\n", 15);
+
+								}else{
+									
+									char *err_msg = calloc(1,sizeof(char));
+
+									size_t err_msg_len = 31 + strlen(s->value);
+
+									snprintf(err_msg, err_msg_len, "Pin %s not present in atmega328p\n", s->value);
+
+									error *e = new_error(err_msg, t_ast->ast_node_index);
+
+									add_new_error(err_list,e);
+
+								}
+							
+							}else{
+
+								char *err_msg = calloc(1,sizeof(char));
+
+								size_t err_msg_len = 21 + strlen(s->name);
+
+								snprintf(err_msg, err_msg_len, "Symbol %s not declared\n", t_ast->args_list->first_arg->arg_name);
+
+								error *e = new_error(err_msg, t_ast->ast_node_index);
+
+								add_new_error(err_list,e);
+
+							}
+						}
 					}//first argument CONSTANT
-				}//input //wait
+				}else if(strncmp(t_ast->function_name,"wait",4) == 0){
+
+					//wait
+			
+					if(delay_code_flag == 0){
+					char *reg = use_register(register_list);
+
+					char *delay_counter = use_register(register_list);
+
+					char *temp = use_register(register_list);
+
+					sprintf(code_init, ".def overflow_counter = %s\n"
+									   ".def delay_count = %s\n\n"
+									   ".def temp = %s\n"
+									   ".org 0x0000\n"
+									   "rjmp reset\n\n"
+									   ".org 0x0020\n"
+									   "rjmp overflow_handler\n", reg, delay_counter, temp);
+
+					reset_code = "\n\nreset:\n" 
+								 "\tldi temp, 0b00000101\n"
+								 "\tout TCCR0B, temp				;prescaling to 1024\n"
+								 "\tldi temp, 0b00000001\n"
+								 "\tsts TIMSK0, temp				;enabling timer interrupt\n"
+								 "\tsei								;enabling global interrupt\n";
+
+
+					delay_function = calloc(200, sizeof(char));
+					
+					delay_function = "\n\ndelay:\n"
+									 "\tclr overflow_counter\n"
+									 "\tsec_count:\n"
+									 "\t\tcp overflow_counter, delay_count\n"
+									 "\tbrne sec_count\n"
+									 "\tret\n";
+						
+					//timer_overflow_handler = calloc(20, sizeof(char));
+
+					timer_overflow_handler = "\n\noverflow_handler:\n"
+										     "\tinc overflow_counter\n"
+ 											 "\tcpi overflow_counter, 61\n"
+											 "\tbrne PC+2\n"
+											 "\tclr overflow_counter\n"
+											 "\treti\n";
+
+						delay_code_flag = 1;
+					}
+					char *arg = (char*) t_ast->args_list->first_arg->arg_name;
+
+					if( isdigit(*arg) ){
+
+						int delay_time = atoi(arg);
+						
+						if(delay_time <= 1000){
+							
+							int calc_delay = (delay_time * 60)/1000;
+
+							char *temp_code = calloc(10, sizeof(char));
+
+							sprintf(temp_code,"\tldi delay_count, %d\n", calc_delay);
+							strncat(asm_main_code, temp_code, strlen(temp_code));
+							free(temp_code);
+							strncat(asm_main_code,"\trcall delay\n",14);
+						
+						}else{
+
+							int calc_delay = (delay_time * 60)/1000;
+							
+							int calc_delay_count =(int)calc_delay/60;
+
+							strncat(asm_main_code,"\tldi delay_count, 60\n", 22);
+							for(int i = 0;i < calc_delay_count;i++){	
+								strncat(asm_main_code,"\trcall delay\n", 14);		
+							}
+
+						}
+					}//error
+				
+				}//input
 			}//user defined funciton
 		}//other asts
 
 		t_ast = t_ast->next_ast_node;
+		if(t_ast != NULL && t_ast->function_name != NULL){
+			printf("\t%s\n", t_ast->function_name);
+		}
 
 	}
 
@@ -122,16 +320,46 @@ void visitor_evaluate(ast_l *ast_list, error_list* err_list){
 
 		fprintf(f,".include \"./m328Pdef.inc\"\n\n\n");
 
-		fprintf(f, "start:\n");
+		if(delay_function != NULL){
+			fprintf(f,"%s", code_init);
+			fprintf(f,"%s", reset_code);
+			//free(code_init);
+			//free(reset_code);
+		}
 
-		fprintf(f, "%s", asm_code);
+		fprintf(f,"\nsetup:\n");
 
-		fprintf(f,"\trjmp start\n");
+		fprintf(f,"%s", asm_setup_code);
+
+		fprintf(stdout,"%s", asm_setup_code);
+
+		fprintf(f,"\n\n");
+
+		fprintf(f, "main:\n");
+
+		fprintf(f, "%s", asm_main_code);
+
+		fprintf(f,"\n\nend:\n");
+
+		fprintf(f, "\trjmp end\n");
+ 
+		if(delay_function != NULL){
+			fprintf(f,"%s",delay_function);
+			fprintf(f,"%s", timer_overflow_handler);
+			//free(code_init);
+			//free(reset_code);
+			//free(delay_function);
+			//free(timer_overflow_handler);
+		}
 
 		fclose(f);
 
-		free(asm_code);
+		//free(asm_setup_code);
+
+		//free(asm_main_code);
 
 	}
 
 }
+
+

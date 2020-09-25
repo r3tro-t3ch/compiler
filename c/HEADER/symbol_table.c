@@ -97,10 +97,9 @@ symbol* search_symbol(symbol_table *table, char *name){
 
 	symbol *temp = table->first_symbol;
 
-	symbol* ret_symbol = calloc(1, sizeof(symbol));
+	symbol *ret_symbol = calloc(1, sizeof(symbol));
 
 	while(temp != NULL){
-
 
 		if(strncmp(temp->name, name, len) == 0){
 

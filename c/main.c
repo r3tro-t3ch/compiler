@@ -10,14 +10,33 @@
 int main(int argc, char *argv[]){
 
 	lexer *l = new_lexer(
-		"var a = 10\n"
-		"var b = 11\n"
-		"var c = 12\n"
-		"var d = 13\n"
+		"var a = 13\n"
+		"var b = 12\n"
+		"var c = 11\n"
+		"var d = 10\n"
+
 		"output(a, HIGH)\n"
+		"wait(500)\n"
+		"output(a, LOW)\n"
+		"wait(500)\n"
+
 		"output(b, HIGH)\n"
+		"wait(1000)\n"
+		"output(b, LOW)\n"
+		"wait(1000)\n"
+
 		"output(c, HIGH)\n"
-		"output(d,HIGH)\n"
+		"wait(2000)\n"
+		"output(c, LOW)\n"
+		"wait(500)\n"
+
+
+		"output(d, HIGH)\n"
+		"wait(3000)\n"
+		"output(d, LOW)\n"
+		"wait(3000)\n"
+
+
 		"\0" );
 
 	parser *p = new_parser(l);
