@@ -323,8 +323,6 @@ void visitor_evaluate(ast_l *ast_list, error_list* err_list){
 		if(delay_function != NULL){
 			fprintf(f,"%s", code_init);
 			fprintf(f,"%s", reset_code);
-			//free(code_init);
-			//free(reset_code);
 		}
 
 		fprintf(f,"\nsetup:\n");
@@ -346,17 +344,22 @@ void visitor_evaluate(ast_l *ast_list, error_list* err_list){
 		if(delay_function != NULL){
 			fprintf(f,"%s",delay_function);
 			fprintf(f,"%s", timer_overflow_handler);
-			//free(code_init);
-			//free(reset_code);
-			//free(delay_function);
-			//free(timer_overflow_handler);
 		}
 
 		fclose(f);
 
-		//free(asm_setup_code);
+		free(asm_setup_code);
 
-		//free(asm_main_code);
+		free(asm_main_code);
+
+		free(code_init);
+		
+		//free(reset_code);
+
+		//free(timer_overflow_handler);
+
+
+	//		free(delay_function);
 
 	}
 
