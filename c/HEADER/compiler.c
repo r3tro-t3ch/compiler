@@ -101,13 +101,13 @@ char* get_string(lexer *l){
     next_char(l);
     while( l-> current_char != '"' ){
 	
-		identifier = realloc(identifier, strlen(identifier) + sizeof(char));
+		identifier = realloc(identifier, i + sizeof(char));
 	    identifier[i] = l->current_char;
         i++;
         next_char(l);
 	}
 
-	identifier = realloc(identifier, strlen(identifier) + sizeof(char));
+	identifier = realloc(identifier, i + sizeof(char));
 	identifier[i] = '\0';
 
 	return identifier;
@@ -762,6 +762,8 @@ ast* parse_var_def( parser *p, error_list *err_list, ast_l* ast_list){
 				return NULL;
 			}
 
+			a->type = "AST_VAR_DEF_ASSIGNMENT_STRING";
+
 			a->var_def_var_content = get_current_token(p)->content;
 		
 			a->var_def_var_type = get_current_token(p)->type;
@@ -1149,9 +1151,6 @@ ast* parse_function_call(parser *p,error_list *err_list,  ast_l *ast_list){
 
 			get_next_token(p); // (
 
-			fprintf(stdout,"here\n");
-
-
 			if( parser_eat(get_current_token(p), "T_LPAREN", err_list, ast_list->line_count ) == 0){
 
 				error_flag = 1;
@@ -1263,8 +1262,6 @@ ast_l* parse_statements(parser *p, error_list *err_list){
 
 			}else if( strncmp(t->type, "T_LPAREN", 8) == 0 ){
 
-		
-				fprintf(stdout, "%s \n", get_current_token(p)->content);
 				ast *node = parse_function_call(p, err_list, ast_list);
 
 				if( node != NULL ){

@@ -5,7 +5,7 @@
 
 #define ERR_MSG_LEN 37
 #define ERR_MSG_VAR_PRESENT_LEN 30 
-#define ERR_MSG_VAR_NOT_PRESENT_LEN 21
+#define ERR_MSG_VAR_NOT_PRESENT_LEN 28
 
 typedef struct ERROR{
 
