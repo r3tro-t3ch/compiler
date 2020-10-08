@@ -10,9 +10,7 @@
 int main(int argc, char *argv[]){
 
 	lexer *l = new_lexer(
-		"output(13, HIGH)\n"
-		"var a = 2000\n"
-		"wait(a)\n"
+		"var a = 1 + b * c\n"
 		"\0" );
 
 	parser *p = new_parser(l);

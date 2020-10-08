@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include "expression.h"
 #include <string.h>
+#include <stdio.h>
 
 int is_expression_token(token *t){
 
@@ -58,12 +59,12 @@ void add_new_token(token_list *list, token *t){
 
 		list->first_token = t;
 		list->last_token = t;
-		list->last_token++;
+		list->token_count++;
 
 	}else{
 
-		t->prev_token = list->last_token;
 		list->last_token->next_token = t;
+		t->prev_token = list->last_token;
 		list->last_token = t;
 		list->token_count++;
 
@@ -72,11 +73,11 @@ void add_new_token(token_list *list, token *t){
 }
 
 //new expression node
-expression* new_expression_node(){
+expression_node* new_expression_node(token *t){
 
-	expression *e = calloc(1, sizeof(expression));
-	e->content = NULL;
-	e->type = NULL;
+	expression_node *e = calloc(1, sizeof(expression_node));
+	e->content = t->content;
+	e->type = t->type;
 	e->left_node = NULL;
 	e->right_node = NULL;
 	return e;
@@ -94,21 +95,25 @@ expr_ast* new_expression_ast(){
 }
 
 //reverse token list
-token_list* reverse_token_list(token_list *list){
+void reverse_token_list(token_list *list){
 
-	token_list *reverse = new_token_list();
-	
-	token *temp = list->last_token;
+	token *current = list->first_token;
+	list->last_token = list->first_token;
+	token *temp = NULL;
 
-	while(temp->prev_token != NULL){
+	while(current != NULL){
 
-		add_new_token(reverse, list->last_token);
-		list->last_token = list->last_token->prev_token;
-		temp = list->last_token;
+		temp = current->prev_token;
+		current->prev_token = current->next_token;
+		current->next_token = temp;
+		current = current->prev_token;
 
 	}
 
-	return reverse;
+	if(temp != NULL){
+		list->first_token = temp->prev_token;
+	}
+
 }
 
 //create a stack
@@ -153,15 +158,22 @@ token* pop(stack *s){
 //stack push operation
 void push(stack *s, token *t){
 
-	t->prev_token = s->top;
-	s->top->next_token = t;
-	s->top = t;
-	s->stack_size++;
+	if(s->top == NULL){
 
+		s->top = t;
+
+	}else{
+	
+		t->prev_token = s->top;
+		s->top->next_token = t;
+		s->top = t;
+		s->stack_size++;
+
+	}
 }
 
 //check precedence of operator
-int check_precdence(token *t){
+int check_precedence(token *t){
 
 	if(	strncmp(t->type, "T_ASTERIX", 9) == 0 ||
 		strncmp(t->type, "T_FSLASH", 8) == 0 ||
@@ -183,7 +195,7 @@ int check_precdence(token *t){
 token_list* infix_to_prefix(token_list *list){
 
 	token_list *rev;
-	rev = reverse_token_list(list);
+	//rev = reverse_token_list(list);
 	
 	/*final = new_token_list();
 
@@ -227,3 +239,15 @@ token_list* infix_to_prefix(token_list *list){
 expr_ast* create_new_expression_ast(token_list *list){
 
 }*/
+
+//print token list
+void print_token_list(token_list *list){
+
+	token *t = list->first_token;
+
+	while(t != NULL){
+		fprintf(stdout,"content->%s, type->%s\n", t->content, t->type);
+		t = t->next_token;
+	}
+
+}

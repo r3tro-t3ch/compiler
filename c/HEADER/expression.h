@@ -26,11 +26,11 @@ typedef struct EXPRESSION_NODE{
 	struct EXPRESSION_NODE *left_node;
 	struct EXPRESSION_NODE *right_node;
 
-} expression;
+} expression_node;
 
 typedef struct EXPRESSION_AST{
 
-	expression *root_node;
+	expression_node *root_node;
 
 } expr_ast;
 
@@ -48,13 +48,13 @@ token_list* new_token_list();
 void add_new_token (token_list *list, token *t);
 
 //new expression node
-expression* new_expression_node();
+expression_node* new_expression_node(token *t);
 
 //new expression ast
 expr_ast* new_expression_ast();
 
 //reverse token list
-token_list* reverse_token_list(token_list *list);
+void reverse_token_list(token_list *list);
 
 //create a stack
 stack* new_stack();
@@ -76,5 +76,8 @@ token_list* infix_to_prefix(token_list *list);
 
 //create expression ast
 expr_ast* create_new_expression_ast(token_list *list);
+
+//print token list
+void print_token_list(token_list *list);
 
 #endif
