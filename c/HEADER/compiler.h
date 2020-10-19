@@ -149,7 +149,7 @@ int parser_eat(token *t, char *type, error_list *err_list, size_t code_size);
 //parse given statements
 
 //parse expressions
-void parse_expressions(parser *p,/* error_list *err_list,*/ ast_l *ast_list);
+expr_ast* parse_expressions(parser *p,/* error_list *err_list,*/ ast_l *ast_list);
 
 //parse variable declaration and definition
 ast* parse_var_def(parser *p,error_list *err_list,  ast_l *ast_list);

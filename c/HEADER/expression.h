@@ -26,6 +26,9 @@ typedef struct EXPRESSION_NODE{
 	struct EXPRESSION_NODE *left_node;
 	struct EXPRESSION_NODE *right_node;
 
+	struct EXPRESSION_NODE *prev_node;
+	struct EXPRESSION_NODE *next_node;
+
 } expression_node;
 
 typedef struct EXPRESSION_AST{
@@ -40,6 +43,14 @@ typedef struct STACK{
 	size_t stack_size;
 
 } stack;
+
+typedef struct EXPR_STACK{
+
+	expression_node *top;
+	size_t stack_size;
+
+} expr_stack;
+
 
 //new token list
 token_list* new_token_list();
@@ -59,6 +70,9 @@ void reverse_token_list(token_list *list);
 //create a stack
 stack* new_stack();
 
+//create a stack
+expr_stack* new_expr_stack();
+
 //get top value of stack
 token* get_stack_top(stack *s);
 
@@ -67,6 +81,15 @@ token* pop(stack *s);
 
 //stack push operation
 void push(stack *s, token *t);
+
+//expression stack pop operation
+expression_node* pop_expr(expr_stack *s);
+
+//expression stack push operation
+void push_expr(expr_stack *s, expression_node *t);
+
+//printing expression tree in inorder
+void print_expression_ast(expression_node *root_node);
 
 //check precedence of operator
 int check_precedence(token *t);

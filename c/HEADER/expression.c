@@ -80,6 +80,8 @@ expression_node* new_expression_node(token *t){
 	e->type = t->type;
 	e->left_node = NULL;
 	e->right_node = NULL;
+	e->next_node = NULL;
+	e->prev_node = NULL;
 	return e;
 
 
@@ -126,6 +128,16 @@ stack* new_stack(){
 
 }
 
+//create a stack
+expr_stack* new_expr_stack(){
+	
+	expr_stack *s = calloc(1, sizeof(expr_stack));
+	s->top = NULL;
+	s->stack_size = 0;
+	return s;
+
+}
+
 //get the top value of stack
 token* get_stack_top(stack *s){
 
@@ -145,7 +157,7 @@ token* get_stack_top(stack *s){
 //stack pop operation
 token* pop(stack *s){
 
-	if(s->stack_size > 0){
+	if(s->stack_size >= 0){
 		token *t = s->top;
 		s->top = s->top->prev_token;
 		s->stack_size--;
@@ -170,6 +182,50 @@ void push(stack *s, token *t){
 		s->stack_size++;
 
 	}
+}
+
+//expression stack pop operation
+expression_node* pop_expr(expr_stack *s){
+
+	if(s->stack_size >= 0){
+		expression_node *t = s->top;
+		s->top = s->top->prev_node;
+		s->stack_size--;
+		return t;
+	}else{
+		return NULL;
+	}
+}
+
+//expression stack push operation
+void push_expr(expr_stack *s, expression_node *t){
+
+	if(s->top == NULL){
+
+		s->top = t;
+
+	}else{
+	
+		t->prev_node = s->top;
+		s->top->next_node = t;
+		s->top = t;
+		s->stack_size++;
+
+	}
+}
+
+//printing expression tree in inorder
+void print_expression_ast(expression_node *root_node){
+
+	if(root_node == NULL){
+		return;
+	}
+
+	print_expression_ast(root_node->left_node);
+
+	fprintf(stdout, "%s ", root_node->content);
+
+	print_expression_ast(root_node->right_node);
 }
 
 //check precedence of operator

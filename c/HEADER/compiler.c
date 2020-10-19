@@ -644,9 +644,8 @@ int parser_eat(token *t, char *type, error_list *err_list, size_t code_size){
 }
 
 //parse expressions
-void parse_expressions(parser *p/*, error_list *err_list,*/ ,ast_l *ast_list){
+expr_ast* parse_expressions(parser *p/*, error_list *err_list,*/ ,ast_l *ast_list){
 
-	//expr_ast *expr_node = new_expression_ast();
 
 	token_list *list = new_token_list();
 
@@ -658,19 +657,10 @@ void parse_expressions(parser *p/*, error_list *err_list,*/ ,ast_l *ast_list){
 
 		get_next_token(p);
 
-		//fprintf(stdout,"%s, %s \n", get_current_token(p)->content, get_current_token(p)->type);
 
 	}
 
-	//print_token_list(list);
-
 	reverse_token_list(list);
-
-	//printf("\n\nrev\n");
-
-	//print_token_list(list);
-
-	//adding "(" and ")" to start and end of the reversed expression
 
 	token *temp = new_token("T_LPAREN", "(");
 
@@ -684,11 +674,9 @@ void parse_expressions(parser *p/*, error_list *err_list,*/ ,ast_l *ast_list){
 	temp->prev_token = list->last_token;
 	list->last_token = temp;
 
-	//print_token_list(list);
-
 	token *t = list->first_token;
 
-	token_list *prefix_expression = new_token_list();
+	token_list *postfix_expression = new_token_list();
 
 	stack *STACK = new_stack();
 
@@ -699,7 +687,7 @@ void parse_expressions(parser *p/*, error_list *err_list,*/ ,ast_l *ast_list){
 		if( strncmp(t->type,"T_CONSTANT",11) == 0 ||
 				strncmp(t->type,"T_IDENTIFIER", 12) == 0){
 
-			add_new_token(prefix_expression, new_token(t->type, t->content));
+			add_new_token(postfix_expression, new_token(t->type, t->content));
 
 		}else if( strncmp(t->type,"T_LPAREN", 8) == 0 ){
 
@@ -709,7 +697,7 @@ void parse_expressions(parser *p/*, error_list *err_list,*/ ,ast_l *ast_list){
 
 			while( strncmp( get_stack_top(STACK)->type,"T_LPAREN",8) != 0){
 
-				add_new_token(prefix_expression, new_token(get_stack_top(STACK)->type, get_stack_top(STACK)->content));
+				add_new_token(postfix_expression, new_token(get_stack_top(STACK)->type, get_stack_top(STACK)->content));
 				pop(STACK);
 
 			}
@@ -723,7 +711,7 @@ void parse_expressions(parser *p/*, error_list *err_list,*/ ,ast_l *ast_list){
 
 				while(check_precedence(t) <= check_precedence(get_stack_top(STACK))){
 
-					add_new_token(prefix_expression, get_stack_top(STACK));
+					add_new_token(postfix_expression, get_stack_top(STACK));
 					pop(STACK);
 
 				}
@@ -740,15 +728,15 @@ void parse_expressions(parser *p/*, error_list *err_list,*/ ,ast_l *ast_list){
 	free(STACK);
 
 	//reversing the postfix expression to get prefix
-	reverse_token_list(prefix_expression);
+	//reverse_token_list(prefix_expression);
 
-	t = prefix_expression->first_token;
+	t = postfix_expression->first_token;
 
 	printf("\n\n\n");
 
 	while(t != NULL){
 
-		printf("%s", t->content);
+		printf("%s ", t->content);
 
 		t = t->next_token;
 
@@ -760,34 +748,40 @@ void parse_expressions(parser *p/*, error_list *err_list,*/ ,ast_l *ast_list){
 	
 	expr_ast *expression_tree = new_expression_ast();
 
-	t = prefix_expression->first_token;
+	t = postfix_expression->first_token;
 
-	expression_node *expr;
-	/*
+	expr_stack *EXP_STACK = new_expr_stack();
+
 	while(t != NULL){
 
-		expr = new_expression_node(t);
+		if( is_operator(t) == 1 ){
 
-		if( is_operator(t) == 1){
+			expression_node *left = pop_expr(EXP_STACK);
+			expression_node *right = pop_expr(EXP_STACK);
 
-			
+			expression_node *operator = new_expression_node(t);
 
-		}
+			operator->left_node = left;
+			operator->right_node = right;
 
-		if(expression_tree->root_node == NULL){
-
-			expression_tree->root_node = expr;	
+			push_expr(EXP_STACK, operator);	
 
 		}else{
 
+			push_expr(EXP_STACK, new_expression_node(t));	
 
-
-		}
+		}		
 
 		t = t->next_token;
+
 	}
-*/
-	//print_token_list(prefix_expression);
+
+	expression_tree->root_node = pop_expr(EXP_STACK);
+
+	print_expression_ast(expression_tree->root_node);
+
+	return expression_tree;
+
 }
 
 //parse var declaration and definition
@@ -819,8 +813,6 @@ ast* parse_var_def( parser *p, error_list *err_list, ast_l* ast_list){
 
 		a->type = "AST_VAR_DEF_ASSIGNMENT";
 
-		//parse_expressions(p, ast_list);
-
 		if(parser_eat(get_current_token(p), "T_EQUAL", err_list, ast_list->line_count) == 0){
 			error_flag = 1;
 			return NULL;
@@ -830,7 +822,7 @@ ast* parse_var_def( parser *p, error_list *err_list, ast_l* ast_list){
 
 		if( strncmp(t->type,"T_CONSTANT", 10) == 0 ){
 
-			/*
+			/*	
 			get_next_token(p);
 	
 			if(parser_eat(get_current_token(p), "T_CONSTANT", err_list, ast_list->line_count) == 0){
@@ -841,25 +833,26 @@ ast* parse_var_def( parser *p, error_list *err_list, ast_l* ast_list){
 
 			*************************************************************************************
 			* 										CODE TESTING                                 *
-			*************************************************************************************
+			************************************************************************************
 
-			a->type = "AST_VAR_DEF_ASSIGNMENT_CONSTANT";
 
 			a->var_def_var_content = get_current_token(p)->content;
 
 			a->var_def_var_type = get_current_token(p)->type;
 
-			a->ast_node_index = ast_list->line_count;
 
 			if(error_flag == 0){
 		
 				return a;
 
 			}
+			
 			*/
+			a->type = "AST_VAR_DEF_ASSIGNMENT_CONSTANT";
 			
-		parse_expressions(p,ast_list);
+			a->ast_node_index = ast_list->line_count;
 			
+			a->var_def_var_expr = parse_expressions(p,ast_list);
 
 		}else if( strncmp(t->type, "T_IDENTIFIER", 12) == 0 ){
 		
