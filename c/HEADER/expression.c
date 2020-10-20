@@ -228,6 +228,49 @@ void print_expression_ast(expression_node *root_node){
 	print_expression_ast(root_node->right_node);
 }
 
+//evaluate expression tree and return the answer
+char* evaluate_expression_ast(expression_node *node){
+
+	expression_node* root = node;
+
+	char * answer = calloc(1, sizeof(char));
+
+	if( root->left_node == NULL && root->right_node == NULL ){
+
+		return root->content;
+
+	}
+
+	int left_val = atoi(evaluate_expression_ast(root->left_node)); 
+
+	int right_val = atoi(evaluate_expression_ast(root->right_node));
+
+	if( strncmp(root->type, "T_PLUS", 6) == 0 ){
+
+		sprintf(answer,"%d", left_val + right_val);
+		return answer;
+
+	}
+
+	if( strncmp(root->type, "T_MINUS", 7) == 0 ){
+
+		sprintf(answer,"%d", left_val - right_val);
+		return answer;
+
+	}
+	
+	if( strncmp(root->type, "T_ASTERIX", 9) == 0 ){
+
+		sprintf(answer,"%d", left_val * right_val);
+		return answer;
+
+	}
+
+	sprintf(answer,"%d", left_val / right_val);
+	return answer;
+
+}
+
 //check precedence of operator
 int check_precedence(token *t){
 

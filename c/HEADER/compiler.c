@@ -646,7 +646,6 @@ int parser_eat(token *t, char *type, error_list *err_list, size_t code_size){
 //parse expressions
 expr_ast* parse_expressions(parser *p/*, error_list *err_list,*/ ,ast_l *ast_list){
 
-
 	token_list *list = new_token_list();
 
 	get_next_token(p);
@@ -656,7 +655,6 @@ expr_ast* parse_expressions(parser *p/*, error_list *err_list,*/ ,ast_l *ast_lis
 		add_new_token(list, get_current_token(p));
 
 		get_next_token(p);
-
 
 	}
 
@@ -853,6 +851,8 @@ ast* parse_var_def( parser *p, error_list *err_list, ast_l* ast_list){
 			a->ast_node_index = ast_list->line_count;
 			
 			a->var_def_var_expr = parse_expressions(p,ast_list);
+
+			return a;
 
 		}else if( strncmp(t->type, "T_IDENTIFIER", 12) == 0 ){
 		

@@ -3,6 +3,7 @@
 #include "symbol_table.h"
 #include <stdio.h>
 #include <ctype.h>
+#include "expression.h"
 
 //atmega328p general purpose register set
 static char *register_list[] = { 
@@ -83,10 +84,22 @@ void visitor_evaluate(ast_l *ast_list, error_list* err_list){
 
 			temp_s = search_symbol(table, t_ast->var_def_var_name);
 
+
+			//checking if the give variable name is present or not
+			//else raise an error
+
 			if(temp_s == NULL){
 
+				/*                IMPLEMENTING EXPRESSION EVAL                */
+
+				expression_node* root = t_ast->var_def_var_expr->root_node;
+
+				char* answer = evaluate_expression_ast(root);
+
+				printf("ans = %s \n",  answer);
+
 				s = new_var_symbol( t_ast->var_def_var_name,
-									t_ast->var_def_var_content,
+									answer,
 									"T_IDENTIFIER");
 
 				add_new_symbol(table, s);
@@ -104,7 +117,7 @@ void visitor_evaluate(ast_l *ast_list, error_list* err_list){
 				add_new_error(err_list, new_error(err_msg, t_ast->ast_node_index));
 
 			}
-
+			
 		}else if( strncmp(t_ast->type, "AST_VAR_DEF_ASSIGNMENT_IDENTIFIER", 22) == 0){
 
 			temp_s = search_symbol(table, t_ast->var_def_var_name);

@@ -91,6 +91,9 @@ void push_expr(expr_stack *s, expression_node *t);
 //printing expression tree in inorder
 void print_expression_ast(expression_node *root_node);
 
+//evaluate expression tree and return the answer
+char* evaluate_expression_ast(expression_node *node);
+
 //check precedence of operator
 int check_precedence(token *t);
 

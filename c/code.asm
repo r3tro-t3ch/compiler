@@ -11,9 +11,11 @@
 
 
 setup:
+	sbi DDRB, 5
 
 
 main:
+	sbi PortB, 5
 
 
 end:
