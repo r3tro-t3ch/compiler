@@ -229,8 +229,9 @@ void print_expression_ast(expression_node *root_node){
 }
 
 //evaluate expression tree and return the answer
-char* evaluate_expression_ast(expression_node *node){
+char* evaluate_expression_ast(token_list *node){
 
+	/*
 	expression_node* root = node;
 
 	char * answer = calloc(1, sizeof(char));
@@ -267,7 +268,52 @@ char* evaluate_expression_ast(expression_node *node){
 	}
 
 	sprintf(answer,"%d", left_val / right_val);
-	return answer;
+	return answer;*/
+
+	token *t = node->first_token;
+
+	char *answer = calloc(1, sizeof(char));
+
+	stack *STACK = new_stack();
+
+	while( t != NULL ){
+
+		if( strncmp(t->type, "T_CONSTANT", 10) == 0 ){
+
+			push(STACK, t);
+
+		}else{
+
+			int left_operand = atoi(pop(STACK)->content);
+			int right_operand = atoi(pop(STACK)->content);
+
+			if( strncmp(t->type, "T_PLUS", 6) == 0 ){
+
+				sprintf(answer,"%d", left_operand + right_operand);
+				push(STACK, new_token("T_CONSTANT", answer));
+
+			}else if( strncmp(t->type, "T_MINUS", 7) == 0 ){
+
+				sprintf(answer,"%d", left_operand - right_operand);
+				push(STACK, new_token("T_CONSTANT", answer));
+
+			}else if( strncmp(t->type, "T_ASTERIX", 9) == 0 ){
+
+				sprintf(answer,"%d", left_operand * right_operand);
+				push(STACK, new_token("T_CONSTANT", answer));
+
+			}else if( strncmp(t->type,"T_FSLASH", 8) == 0 ){
+
+				sprintf(answer,"%d", left_operand / right_operand);
+				push(STACK, new_token("T_CONSTANT", answer));
+			}
+		}
+
+		t = t->next_token;
+
+	}
+
+	return STACK->top->content;
 
 }
 
@@ -338,6 +384,50 @@ token_list* infix_to_prefix(token_list *list){
 expr_ast* create_new_expression_ast(token_list *list){
 
 }*/
+
+//check if postfix expression is valid or not
+int is_postfix_valid(token_list* list){
+
+	int operand_count = 0, operator_count = 0;
+	
+	token *t = list->first_token;
+
+	while(t != NULL){
+
+		if( is_operator(t) == 1 ){
+
+			operator_count++;
+
+		}else{
+
+			operand_count++;
+
+		}
+
+		t = t->next_token;
+
+	}
+
+
+	//postfix expression validation
+	//1 -> first two elements are operand
+	//2 -> last element is always an operator
+	//3 -> for every n operands there are n-1 operators
+
+	if( 
+		is_operator(list->first_token) == 0 &&
+		is_operator(list->first_token->next_token) == 0 &&
+		operand_count == operator_count+1 &&
+		is_operator(list->last_token) == 1
+	  ){
+
+		return 1;
+
+	}
+	
+	return 0;
+	
+}
 
 //print token list
 void print_token_list(token_list *list){

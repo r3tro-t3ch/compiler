@@ -90,13 +90,13 @@ typedef struct AST{
 	char *var_def_var_name;
 	char *var_def_var_type;
 	char *var_def_var_content;
-	expr_ast *var_def_var_expr;
+	token_list *var_def_var_expr;
 	
 	//variable assignment
 	char *var_name;
 	char *var_type;
 	char *var_content;
-	expr_ast *var_expr;
+	token_list *var_expr;
 
 } ast;
 
@@ -149,7 +149,7 @@ int parser_eat(token *t, char *type, error_list *err_list, size_t code_size);
 //parse given statements
 
 //parse expressions
-expr_ast* parse_expressions(parser *p,/* error_list *err_list,*/ ast_l *ast_list);
+token_list* parse_expressions(parser *p/* error_list *err_list,*/);
 
 //parse variable declaration and definition
 ast* parse_var_def(parser *p,error_list *err_list,  ast_l *ast_list);

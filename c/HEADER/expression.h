@@ -92,7 +92,7 @@ void push_expr(expr_stack *s, expression_node *t);
 void print_expression_ast(expression_node *root_node);
 
 //evaluate expression tree and return the answer
-char* evaluate_expression_ast(expression_node *node);
+char* evaluate_expression_ast(token_list *node);
 
 //check precedence of operator
 int check_precedence(token *t);
@@ -102,6 +102,9 @@ token_list* infix_to_prefix(token_list *list);
 
 //create expression ast
 expr_ast* create_new_expression_ast(token_list *list);
+
+//check if postfix expression is valid or not
+int is_postfix_valid(token_list* list);
 
 //print token list
 void print_token_list(token_list *list);

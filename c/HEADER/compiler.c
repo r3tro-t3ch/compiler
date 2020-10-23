@@ -644,7 +644,7 @@ int parser_eat(token *t, char *type, error_list *err_list, size_t code_size){
 }
 
 //parse expressions
-expr_ast* parse_expressions(parser *p/*, error_list *err_list,*/ ,ast_l *ast_list){
+token_list* parse_expressions(parser *p /*, error_list *err_list,*/){
 
 	token_list *list = new_token_list();
 
@@ -727,7 +727,7 @@ expr_ast* parse_expressions(parser *p/*, error_list *err_list,*/ ,ast_l *ast_lis
 
 	//reversing the postfix expression to get prefix
 	//reverse_token_list(prefix_expression);
-
+	/*
 	t = postfix_expression->first_token;
 
 	printf("\n\n\n");
@@ -777,8 +777,9 @@ expr_ast* parse_expressions(parser *p/*, error_list *err_list,*/ ,ast_l *ast_lis
 	expression_tree->root_node = pop_expr(EXP_STACK);
 
 	print_expression_ast(expression_tree->root_node);
+	*/
 
-	return expression_tree;
+	return postfix_expression;
 
 }
 
@@ -846,11 +847,22 @@ ast* parse_var_def( parser *p, error_list *err_list, ast_l* ast_list){
 			}
 			
 			*/
+			
+			a->var_def_var_expr = parse_expressions(p);
+
+			if(is_postfix_valid(a->var_def_var_expr) == 0){
+
+				error *e = new_error("Invalid expression", ast_list->line_count);
+
+				add_new_error(err_list, e);
+
+				return NULL;		
+
+			}
+
 			a->type = "AST_VAR_DEF_ASSIGNMENT_CONSTANT";
-			
+
 			a->ast_node_index = ast_list->line_count;
-			
-			a->var_def_var_expr = parse_expressions(p,ast_list);
 
 			return a;
 

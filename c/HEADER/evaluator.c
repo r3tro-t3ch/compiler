@@ -92,9 +92,9 @@ void visitor_evaluate(ast_l *ast_list, error_list* err_list){
 
 				/*                IMPLEMENTING EXPRESSION EVAL                */
 
-				expression_node* root = t_ast->var_def_var_expr->root_node;
+				token_list* list = t_ast->var_def_var_expr;
 
-				char* answer = evaluate_expression_ast(root);
+				char* answer = evaluate_expression_ast(list);
 
 				printf("ans = %s \n",  answer);
 
