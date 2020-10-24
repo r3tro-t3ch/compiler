@@ -10,7 +10,9 @@
 int main(int argc, char *argv[]){
 
 	lexer *l = new_lexer(
-		"var a = 12 * 12 / 2 - 59  \n"
+		"var c = 1\n"
+		"var b = 12\n"
+		"var a = c + b * 5 - 50\n"
 		"output(a, HIGH)\n"
 		"\0" );
 

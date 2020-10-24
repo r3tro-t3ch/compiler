@@ -2,6 +2,8 @@
 #include "expression.h"
 #include <string.h>
 #include <stdio.h>
+#include "symbol_table.h"
+
 
 int is_expression_token(token *t){
 
@@ -229,46 +231,13 @@ void print_expression_ast(expression_node *root_node){
 }
 
 //evaluate expression tree and return the answer
-char* evaluate_expression_ast(token_list *node){
+char* evaluate_expression_ast(token_list *node, error_list *err_list, symbol_table *table , size_t line){
 
-	/*
-	expression_node* root = node;
+	if(node->token_count == 1){
 
-	char * answer = calloc(1, sizeof(char));
-
-	if( root->left_node == NULL && root->right_node == NULL ){
-
-		return root->content;
+		return node->first_token->content;
 
 	}
-
-	int left_val = atoi(evaluate_expression_ast(root->left_node)); 
-
-	int right_val = atoi(evaluate_expression_ast(root->right_node));
-
-	if( strncmp(root->type, "T_PLUS", 6) == 0 ){
-
-		sprintf(answer,"%d", left_val + right_val);
-		return answer;
-
-	}
-
-	if( strncmp(root->type, "T_MINUS", 7) == 0 ){
-
-		sprintf(answer,"%d", left_val - right_val);
-		return answer;
-
-	}
-	
-	if( strncmp(root->type, "T_ASTERIX", 9) == 0 ){
-
-		sprintf(answer,"%d", left_val * right_val);
-		return answer;
-
-	}
-
-	sprintf(answer,"%d", left_val / right_val);
-	return answer;*/
 
 	token *t = node->first_token;
 
@@ -282,11 +251,73 @@ char* evaluate_expression_ast(token_list *node){
 
 			push(STACK, t);
 
+		}else if( strncmp(t->type, "T_IDENTIFIER", 12) == 0 ){
+
+			symbol *temp = search_symbol(table, t->content);
+
+			if(temp != NULL){
+
+				push(STACK, t);
+
+			}else{
+
+
+				size_t err_msg_len = strlen(t->content) + ERR_MSG_VAR_NOT_PRESENT_LEN;
+
+				char *err_msg = calloc(err_msg_len, sizeof(char));
+
+				snprintf(err_msg, err_msg_len,
+						 "variable %s is not declared\n",
+						 t->content);
+
+				add_new_error(err_list, new_error(err_msg, line));
+
+
+				return NULL;
+			}
+
 		}else{
 
-			int left_operand = atoi(pop(STACK)->content);
-			int right_operand = atoi(pop(STACK)->content);
+			token *left = pop(STACK);
+			token *right = pop(STACK);
 
+			int left_operand, right_operand;
+
+			if(  strncmp(left->type, "T_IDENTIFIER", 12) == 0 || 
+				 strncmp(right->type, "T_IDENTIFIER", 12) == 0){
+
+				if( strncmp(left->type, "T_IDENTIFIER", 12) == 0 &&
+					strncmp(right->type, "T_IDENTIFIER", 12) != 0){
+				
+					symbol *s = search_symbol(table, left->content);
+					left_operand = atoi(s->value);
+					right_operand = atoi(right->content);
+
+				}else if( strncmp(right->type, "T_IDENTIFIER", 12) == 0 &&
+				  	      strncmp(left->type, "T_IDENTIFIER", 12) != 0){
+
+					symbol *s = search_symbol(table, right->content);
+					right_operand = atoi(s->value);
+					left_operand = atoi(left->content);
+
+				}else{
+
+					symbol *l = search_symbol(table, left->content);
+					symbol *r = search_symbol(table, right->content);
+
+					left_operand = atoi(l->value);
+					right_operand = atoi(r->value);
+
+				}
+ 
+			}else{
+
+				left_operand = atoi(left->content);
+				right_operand = atoi(right->content);
+
+			}
+
+			
 			if( strncmp(t->type, "T_PLUS", 6) == 0 ){
 
 				sprintf(answer,"%d", left_operand + right_operand);
@@ -387,6 +418,12 @@ expr_ast* create_new_expression_ast(token_list *list){
 
 //check if postfix expression is valid or not
 int is_postfix_valid(token_list* list){
+
+	if(list->token_count == 1){
+
+		return 1;
+
+	}
 
 	int operand_count = 0, operator_count = 0;
 	

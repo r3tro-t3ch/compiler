@@ -80,7 +80,7 @@ void visitor_evaluate(ast_l *ast_list, error_list* err_list){
 
 	while(t_ast != NULL){
 
-		if( strncmp(t_ast->type, "AST_VAR_DEF_ASSIGNMENT_CONSTANT", 22) == 0){
+		if( strncmp(t_ast->type, "AST_VAR_DEF_ASSIGNMENT", 22) == 0){
 
 			temp_s = search_symbol(table, t_ast->var_def_var_name);
 
@@ -94,16 +94,20 @@ void visitor_evaluate(ast_l *ast_list, error_list* err_list){
 
 				token_list* list = t_ast->var_def_var_expr;
 
-				char* answer = evaluate_expression_ast(list);
+				char* answer = evaluate_expression_ast(list, err_list, table, t_ast->ast_node_index);
 
-				printf("ans = %s \n",  answer);
+				if(answer != NULL){
 
-				s = new_var_symbol( t_ast->var_def_var_name,
-									answer,
-									"T_IDENTIFIER");
+					printf("ans = %s \n",  answer);
 
-				add_new_symbol(table, s);
-			
+					s = new_var_symbol( t_ast->var_def_var_name,
+										answer,
+										"T_IDENTIFIER");
+
+					add_new_symbol(table, s);
+
+				}
+
 			}else{
 
 				size_t err_msg_len = strlen(t_ast->var_def_var_name) + ERR_MSG_VAR_PRESENT_LEN;
@@ -118,7 +122,7 @@ void visitor_evaluate(ast_l *ast_list, error_list* err_list){
 
 			}
 			
-		}else if( strncmp(t_ast->type, "AST_VAR_DEF_ASSIGNMENT_IDENTIFIER", 22) == 0){
+		}/*else if( strncmp(t_ast->type, "AST_VAR_DEF_ASSIGNMENT_IDENTIFIER", 22) == 0){
 
 			temp_s = search_symbol(table, t_ast->var_def_var_name);
 
@@ -163,7 +167,7 @@ void visitor_evaluate(ast_l *ast_list, error_list* err_list){
 
 			}
 
-		}else if( strncmp(t_ast->type,"AST_BUILTIN_FUNCTION_CALL",26) == 0 ){
+		}*/else if( strncmp(t_ast->type,"AST_BUILTIN_FUNCTION_CALL",26) == 0 ){
 
 			if(is_builtin_function(t_ast->function_name) == 1){
 

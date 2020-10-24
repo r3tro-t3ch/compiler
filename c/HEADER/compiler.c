@@ -819,7 +819,8 @@ ast* parse_var_def( parser *p, error_list *err_list, ast_l* ast_list){
 
 		t = peek_next_token(p);
 
-		if( strncmp(t->type,"T_CONSTANT", 10) == 0 ){
+		if( strncmp(t->type,"T_CONSTANT", 10) == 0 ||
+			strncmp(t->type,"T_IDENTIFIER", 12) == 0){
 
 			/*	
 			get_next_token(p);
@@ -860,13 +861,13 @@ ast* parse_var_def( parser *p, error_list *err_list, ast_l* ast_list){
 
 			}
 
-			a->type = "AST_VAR_DEF_ASSIGNMENT_CONSTANT";
+			a->type = "AST_VAR_DEF_ASSIGNMENT";
 
 			a->ast_node_index = ast_list->line_count;
 
 			return a;
 
-		}else if( strncmp(t->type, "T_IDENTIFIER", 12) == 0 ){
+		/*}else if( strncmp(t->type, "T_IDENTIFIER", 12) == 0 ){
 		
 			get_next_token(p);
 			if(parser_eat(get_current_token(p), "T_IDENTIFIER", err_list, ast_list->line_count) == 0){
@@ -886,7 +887,7 @@ ast* parse_var_def( parser *p, error_list *err_list, ast_l* ast_list){
 		
 				return a;
 
-			}	
+			}*/	
 		}else if( strncmp(t->type, "T_STRING", 9) == 0){
 
 			get_next_token(p);
@@ -914,7 +915,6 @@ ast* parse_var_def( parser *p, error_list *err_list, ast_l* ast_list){
 	}else{
 					
 		t = peek_next_token(p);
-
 
 		if(parser_eat(t, "T_NEWLINE", err_list, ast_list->line_count) == 0 ){
 

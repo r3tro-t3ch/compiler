@@ -3,6 +3,8 @@
 
 #include "token.h"
 #include <stdlib.h>
+#include "error.h"
+#include "symbol_table.h"
 
 //check if given token in an expression token or not
 int is_expression_token(token *t);
@@ -92,7 +94,7 @@ void push_expr(expr_stack *s, expression_node *t);
 void print_expression_ast(expression_node *root_node);
 
 //evaluate expression tree and return the answer
-char* evaluate_expression_ast(token_list *node);
+char* evaluate_expression_ast(token_list *node, error_list *err_list, symbol_table *table , size_t line);
 
 //check precedence of operator
 int check_precedence(token *t);
