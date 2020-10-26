@@ -11,11 +11,9 @@
 
 
 setup:
-	sbi DDRB, 3
 
 
 main:
-	sbi PortB, 3
 
 
 end:

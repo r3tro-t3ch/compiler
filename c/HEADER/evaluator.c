@@ -84,7 +84,6 @@ void visitor_evaluate(ast_l *ast_list, error_list* err_list){
 
 			temp_s = search_symbol(table, t_ast->var_def_var_name);
 
-
 			//checking if the give variable name is present or not
 			//else raise an error
 
@@ -701,7 +700,7 @@ void visitor_evaluate(ast_l *ast_list, error_list* err_list){
 		print_errors(err_list);
 		exit(0);
 	}else{
-		
+	
 		FILE *f = fopen("code.asm","w+");
 
 		fprintf(f,";**************************************************\n"

@@ -93,22 +93,21 @@ int is_builtin_function(char *identifier){
 //to get string
 char* get_string(lexer *l){
 
-	next_char(l);
+	next_char(l);  //skipping the opening "
 	char *identifier = calloc(1, sizeof(char));
     size_t i = 0;
-    identifier[i] = l->current_char;
-    i++;
-    next_char(l);
-    while( l-> current_char != '"' ){
+    while( l->current_char != '\"' ){
 	
 		identifier = realloc(identifier, i + sizeof(char));
 	    identifier[i] = l->current_char;
         i++;
-        next_char(l);
+    	next_char(l);
 	}
 
 	identifier = realloc(identifier, i + sizeof(char));
 	identifier[i] = '\0';
+
+	
 
 	return identifier;
 }
@@ -330,15 +329,16 @@ token* get_next_token(parser *p){
 				return t;
 				break;
 			 }
-		case '"':{
+		case '\"':{
 
 				char *identifier = get_string(p->l);
-											
+
 				t = new_token("T_STRING", identifier);
 				p->current_token = t;
 				next_char(p->l);
 				return t;
 				break;
+
 			 }
 	}	
 
@@ -658,6 +658,12 @@ token_list* parse_expressions(parser *p /*, error_list *err_list,*/){
 
 	}
 
+	if(list->token_count == 1){
+
+		return list;
+
+	}
+
 	reverse_token_list(list);
 
 	token *temp = new_token("T_LPAREN", "(");
@@ -683,7 +689,8 @@ token_list* parse_expressions(parser *p /*, error_list *err_list,*/){
 	while( t != NULL ){
 
 		if( strncmp(t->type,"T_CONSTANT",11) == 0 ||
-				strncmp(t->type,"T_IDENTIFIER", 12) == 0){
+			strncmp(t->type,"T_IDENTIFIER", 12) == 0 ||
+			strncmp(t->type,"T_STRING", 8) == 0){
 
 			add_new_token(postfix_expression, new_token(t->type, t->content));
 
@@ -724,60 +731,6 @@ token_list* parse_expressions(parser *p /*, error_list *err_list,*/){
 
 		
 	free(STACK);
-
-	//reversing the postfix expression to get prefix
-	//reverse_token_list(prefix_expression);
-	/*
-	t = postfix_expression->first_token;
-
-	printf("\n\n\n");
-
-	while(t != NULL){
-
-		printf("%s ", t->content);
-
-		t = t->next_token;
-
-	}
-
-	printf("\n");
-
-	//creating an expression ast
-	
-	expr_ast *expression_tree = new_expression_ast();
-
-	t = postfix_expression->first_token;
-
-	expr_stack *EXP_STACK = new_expr_stack();
-
-	while(t != NULL){
-
-		if( is_operator(t) == 1 ){
-
-			expression_node *left = pop_expr(EXP_STACK);
-			expression_node *right = pop_expr(EXP_STACK);
-
-			expression_node *operator = new_expression_node(t);
-
-			operator->left_node = left;
-			operator->right_node = right;
-
-			push_expr(EXP_STACK, operator);	
-
-		}else{
-
-			push_expr(EXP_STACK, new_expression_node(t));	
-
-		}		
-
-		t = t->next_token;
-
-	}
-
-	expression_tree->root_node = pop_expr(EXP_STACK);
-
-	print_expression_ast(expression_tree->root_node);
-	*/
 
 	return postfix_expression;
 
@@ -820,35 +773,10 @@ ast* parse_var_def( parser *p, error_list *err_list, ast_l* ast_list){
 		t = peek_next_token(p);
 
 		if( strncmp(t->type,"T_CONSTANT", 10) == 0 ||
-			strncmp(t->type,"T_IDENTIFIER", 12) == 0){
+			strncmp(t->type,"T_IDENTIFIER", 12) == 0 ||
+			strncmp(t->type,"T_STRING", 9) == 0 ){
 
-			/*	
-			get_next_token(p);
-	
-			if(parser_eat(get_current_token(p), "T_CONSTANT", err_list, ast_list->line_count) == 0){
-				error_flag = 1;
-				return NULL;
-			}
-
-
-			*************************************************************************************
-			* 										CODE TESTING                                 *
-			************************************************************************************
-
-
-			a->var_def_var_content = get_current_token(p)->content;
-
-			a->var_def_var_type = get_current_token(p)->type;
-
-
-			if(error_flag == 0){
 		
-				return a;
-
-			}
-			
-			*/
-			
 			a->var_def_var_expr = parse_expressions(p);
 
 			if(is_postfix_valid(a->var_def_var_expr) == 0){
@@ -867,51 +795,8 @@ ast* parse_var_def( parser *p, error_list *err_list, ast_l* ast_list){
 
 			return a;
 
-		/*}else if( strncmp(t->type, "T_IDENTIFIER", 12) == 0 ){
-		
-			get_next_token(p);
-			if(parser_eat(get_current_token(p), "T_IDENTIFIER", err_list, ast_list->line_count) == 0){
-				error_flag = 1;
-				return NULL;
-			}
-
-			a->type = "AST_VAR_DEF_ASSIGNMENT_IDENTIFIER";
-
-			a->var_def_var_content = get_current_token(p)->content;
-		
-			a->var_def_var_type = get_current_token(p)->type;
-
-			a->ast_node_index = ast_list->line_count;
-
-			if(error_flag == 0){
-		
-				return a;
-
-			}*/	
-		}else if( strncmp(t->type, "T_STRING", 9) == 0){
-
-			get_next_token(p);
-			if(parser_eat(get_current_token(p), "T_STRING", err_list, ast_list->line_count) == 0){
-				error_flag = 1;
-				return NULL;
-			}
-
-			a->type = "AST_VAR_DEF_ASSIGNMENT_STRING";
-
-			a->var_def_var_content = get_current_token(p)->content;
-		
-			a->var_def_var_type = get_current_token(p)->type;
-
-			a->ast_node_index = ast_list->line_count;
-
-			if(error_flag == 0){
-		
-				return a;
-
-			}
-
 		}
-		
+
 	}else{
 					
 		t = peek_next_token(p);

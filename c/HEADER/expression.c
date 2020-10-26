@@ -13,7 +13,8 @@ int is_expression_token(token *t){
 		strncmp(t->type, "T_MINUS", 7) == 0 ||
 		strncmp(t->type, "T_ASTERIX", 9) == 0 ||
 		strncmp(t->type, "T_FSLASH", 8) == 0 ||
-		strncmp(t->type, "T_MOD", 5) == 0 
+		strncmp(t->type, "T_MOD", 5) == 0 ||
+		strncmp(t->type, "T_STRING", 8) == 0
 		/*strncmp(t->type, "T_GREATER", 9) == 0 ||
 		strncmp(t->type, "T_LESSER", 8) == 0*/
 	  ){
@@ -230,6 +231,56 @@ void print_expression_ast(expression_node *root_node){
 	print_expression_ast(root_node->right_node);
 }
 
+//check if a string is present in in given expression
+int string_present(token *list){
+
+	int flag = 0;
+
+	token *t = list;
+
+	while(t != NULL){
+		
+		if( strncmp( t->type, "T_STRING", 8 ) == 0){
+
+			flag = 1;
+			break;
+
+		}
+
+		t = t->next_token;
+
+	}
+
+	return flag;
+
+}
+
+//check if the string expression only contains + ot T_PLUS
+int is_valid_string_expr(token *list){
+
+	int flag = 0;
+
+	token *t = list;
+
+	while(t != NULL){
+	
+		if( strncmp( t->type , "T_ASTERIX", 9) == 0 ||
+			strncmp( t->type, "T_MINUS",7 ) == 0 ||
+			strncmp( t->type, "T_FSLASH", 8 ) == 0){
+
+			flag = 1;
+			break;
+
+		}
+
+		t = t->next_token;
+
+	}
+
+	return flag;
+
+}
+
 //evaluate expression tree and return the answer
 char* evaluate_expression_ast(token_list *node, error_list *err_list, symbol_table *table , size_t line){
 
@@ -245,105 +296,189 @@ char* evaluate_expression_ast(token_list *node, error_list *err_list, symbol_tab
 
 	stack *STACK = new_stack();
 
-	while( t != NULL ){
+	//check if the exporession has a string value
 
-		if( strncmp(t->type, "T_CONSTANT", 10) == 0 ){
+	if(string_present(t) == 1){
 
-			push(STACK, t);
+		//checking if the string only has + or T_PLUS operator
 
-		}else if( strncmp(t->type, "T_IDENTIFIER", 12) == 0 ){
+		if(is_valid_string_expr(t) == 0){
 
-			symbol *temp = search_symbol(table, t->content);
-
-			if(temp != NULL){
-
-				push(STACK, t);
-
-			}else{
-
-
-				size_t err_msg_len = strlen(t->content) + ERR_MSG_VAR_NOT_PRESENT_LEN;
-
-				char *err_msg = calloc(err_msg_len, sizeof(char));
-
-				snprintf(err_msg, err_msg_len,
-						 "variable %s is not declared\n",
-						 t->content);
-
-				add_new_error(err_list, new_error(err_msg, line));
-
-
-				return NULL;
-			}
-
-		}else{
-
-			token *left = pop(STACK);
-			token *right = pop(STACK);
-
-			int left_operand, right_operand;
-
-			if(  strncmp(left->type, "T_IDENTIFIER", 12) == 0 || 
-				 strncmp(right->type, "T_IDENTIFIER", 12) == 0){
-
-				if( strncmp(left->type, "T_IDENTIFIER", 12) == 0 &&
-					strncmp(right->type, "T_IDENTIFIER", 12) != 0){
+			while( t != NULL ){
 				
-					symbol *s = search_symbol(table, left->content);
-					left_operand = atoi(s->value);
-					right_operand = atoi(right->content);
+				if( strncmp(t->type, "T_CONSTANT", 10) == 0 ||
+					strncmp(t->type, "T_STRING", 7) == 0){
 
-				}else if( strncmp(right->type, "T_IDENTIFIER", 12) == 0 &&
-				  	      strncmp(left->type, "T_IDENTIFIER", 12) != 0){
+					push(STACK, t);
 
-					symbol *s = search_symbol(table, right->content);
-					right_operand = atoi(s->value);
-					left_operand = atoi(left->content);
+				}else if( strncmp(t->type, "T_IDENTIFIER", 12) == 0 ){
+
+					symbol *temp = search_symbol(table, t->content);
+
+					if(temp != NULL){
+
+						push(STACK, t);
+
+					}else{
+
+
+						size_t err_msg_len = strlen(t->content) + ERR_MSG_VAR_NOT_PRESENT_LEN;
+
+						char *err_msg = calloc(err_msg_len, sizeof(char));
+
+						snprintf(err_msg, err_msg_len,
+								 "variable %s is not declared\n",
+								 t->content);
+
+						add_new_error(err_list, new_error(err_msg, line));
+
+
+						return NULL;
+					}
 
 				}else{
 
-					symbol *l = search_symbol(table, left->content);
-					symbol *r = search_symbol(table, right->content);
+					//add all the string
 
-					left_operand = atoi(l->value);
-					right_operand = atoi(r->value);
+					char *answer;
 
-				}
- 
-			}else{
+					token *left = pop(STACK);
+					token *right = pop(STACK);
 
-				left_operand = atoi(left->content);
-				right_operand = atoi(right->content);
+					if( strncmp(t->type, "T_PLUS", 6 ) == 0){
+
+						answer = calloc( strlen(left->content) + strlen(right->content), sizeof(char));
+
+						snprintf(answer, strlen(left->content) + strlen(right->content) + 1,
+										"%s%s",
+										left->content,
+										right->content);
+
+						push(STACK, new_token("T_STRING", answer));
+
+					}
+
+				}						
+
+				t = t->next_token;
 
 			}
 
-			
-			if( strncmp(t->type, "T_PLUS", 6) == 0 ){
+			return STACK->top->content;
 
-				sprintf(answer,"%d", left_operand + right_operand);
-				push(STACK, new_token("T_CONSTANT", answer));
+		}else{
 
-			}else if( strncmp(t->type, "T_MINUS", 7) == 0 ){
+			error *e = new_error("Invalid expression", line);
 
-				sprintf(answer,"%d", left_operand - right_operand);
-				push(STACK, new_token("T_CONSTANT", answer));
+			add_new_error(err_list, e);
 
-			}else if( strncmp(t->type, "T_ASTERIX", 9) == 0 ){
+			return NULL;
 
-				sprintf(answer,"%d", left_operand * right_operand);
-				push(STACK, new_token("T_CONSTANT", answer));
-
-			}else if( strncmp(t->type,"T_FSLASH", 8) == 0 ){
-
-				sprintf(answer,"%d", left_operand / right_operand);
-				push(STACK, new_token("T_CONSTANT", answer));
-			}
 		}
 
-		t = t->next_token;
+
+	}else{
+
+		while( t != NULL ){
+
+			if( strncmp(t->type, "T_CONSTANT", 10) == 0 ){
+
+				push(STACK, t);
+
+			}else if( strncmp(t->type, "T_IDENTIFIER", 12) == 0 ){
+
+				symbol *temp = search_symbol(table, t->content);
+
+				if(temp != NULL){
+
+					push(STACK, t);
+
+				}else{
+
+
+					size_t err_msg_len = strlen(t->content) + ERR_MSG_VAR_NOT_PRESENT_LEN;
+
+					char *err_msg = calloc(err_msg_len, sizeof(char));
+
+					snprintf(err_msg, err_msg_len,
+							 "variable %s is not declared\n",
+							 t->content);
+
+					add_new_error(err_list, new_error(err_msg, line));
+
+
+					return NULL;
+				}
+
+			}else{
+
+				token *left = pop(STACK);
+				token *right = pop(STACK);
+
+				int left_operand, right_operand;
+
+				if(  strncmp(left->type, "T_IDENTIFIER", 12) == 0 || 
+					 strncmp(right->type, "T_IDENTIFIER", 12) == 0){
+
+					if( strncmp(left->type, "T_IDENTIFIER", 12) == 0 &&
+						strncmp(right->type, "T_IDENTIFIER", 12) != 0){
+				
+						symbol *s = search_symbol(table, left->content);
+						left_operand = atoi(s->value);
+						right_operand = atoi(right->content);
+
+					}else if( strncmp(right->type, "T_IDENTIFIER", 12) == 0 &&
+					  	      strncmp(left->type, "T_IDENTIFIER", 12) != 0){
+
+						symbol *s = search_symbol(table, right->content);
+						right_operand = atoi(s->value);
+						left_operand = atoi(left->content);
+
+					}else{
+
+						symbol *l = search_symbol(table, left->content);
+						symbol *r = search_symbol(table, right->content);
+
+						left_operand = atoi(l->value);
+						right_operand = atoi(r->value);
+
+					}
+ 
+				}else{
+
+					left_operand = atoi(left->content);
+					right_operand = atoi(right->content);
+
+				}
+
+			
+				if( strncmp(t->type, "T_PLUS", 6) == 0 ){
+
+					sprintf(answer,"%d", left_operand + right_operand);
+					push(STACK, new_token("T_CONSTANT", answer));
+
+				}else if( strncmp(t->type, "T_MINUS", 7) == 0 ){
+
+					sprintf(answer,"%d", left_operand - right_operand);
+					push(STACK, new_token("T_CONSTANT", answer));
+
+				}else if( strncmp(t->type, "T_ASTERIX", 9) == 0 ){
+
+					sprintf(answer,"%d", left_operand * right_operand);
+					push(STACK, new_token("T_CONSTANT", answer));
+
+				}else if( strncmp(t->type,"T_FSLASH", 8) == 0 ){
+
+					sprintf(answer,"%d", left_operand / right_operand);
+					push(STACK, new_token("T_CONSTANT", answer));
+				}
+			}
+
+			t = t->next_token;
+
+		}
 
 	}
-
 	return STACK->top->content;
 
 }
@@ -444,7 +579,6 @@ int is_postfix_valid(token_list* list){
 		t = t->next_token;
 
 	}
-
 
 	//postfix expression validation
 	//1 -> first two elements are operand

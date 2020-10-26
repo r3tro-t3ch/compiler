@@ -10,10 +10,7 @@
 int main(int argc, char *argv[]){
 
 	lexer *l = new_lexer(
-		"var c = 1\n"
-		"var b = 12\n"
-		"var a = c + b * 5 - 50\n"
-		"output(a, HIGH)\n"
+		"var c = \"hello\" + \" world\" + 13 + 14\n"
 		"\0" );
 
 	parser *p = new_parser(l);
