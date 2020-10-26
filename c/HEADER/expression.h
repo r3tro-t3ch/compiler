@@ -94,13 +94,13 @@ void push_expr(expr_stack *s, expression_node *t);
 void print_expression_ast(expression_node *root_node);
 
 //check if a string is present in in given expression
-int string_present(token *list);
+int string_present(token *list, symbol_table *table);
 
 //check if the string expression only contains + ot T_PLUS
 int is_valid_string_expr(token *list);
 
 //evaluate expression tree and return the answer
-char* evaluate_expression_ast(token_list *node, error_list *err_list, symbol_table *table , size_t line);
+char* evaluate_expression_ast(token_list *node, error_list *err_list, symbol_table *table , size_t line, int *STRING_FLAG);
 
 //check precedence of operator
 int check_precedence(token *t);

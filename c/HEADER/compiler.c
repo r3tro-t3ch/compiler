@@ -728,7 +728,6 @@ token_list* parse_expressions(parser *p /*, error_list *err_list,*/){
 
 		t = t->next_token;
 	}
-
 		
 	free(STACK);
 

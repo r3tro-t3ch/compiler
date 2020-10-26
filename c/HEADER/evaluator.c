@@ -93,15 +93,29 @@ void visitor_evaluate(ast_l *ast_list, error_list* err_list){
 
 				token_list* list = t_ast->var_def_var_expr;
 
-				char* answer = evaluate_expression_ast(list, err_list, table, t_ast->ast_node_index);
+				int FLAG = 0;
+				int *STRING_FLAG = &FLAG;
+
+				char* answer = evaluate_expression_ast(list, err_list, table, t_ast->ast_node_index, STRING_FLAG);
 
 				if(answer != NULL){
 
 					printf("ans = %s \n",  answer);
 
-					s = new_var_symbol( t_ast->var_def_var_name,
-										answer,
-										"T_IDENTIFIER");
+					if(*STRING_FLAG == 0){
+
+						s = new_var_symbol( t_ast->var_def_var_name,
+											answer,
+											"T_IDENTIFIER");
+
+
+					}else{
+					
+						s = new_var_symbol( t_ast->var_def_var_name,
+											answer,
+											"T_STRING");
+				
+					}
 
 					add_new_symbol(table, s);
 
@@ -700,7 +714,7 @@ void visitor_evaluate(ast_l *ast_list, error_list* err_list){
 		print_errors(err_list);
 		exit(0);
 	}else{
-	
+
 		FILE *f = fopen("code.asm","w+");
 
 		fprintf(f,";**************************************************\n"

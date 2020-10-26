@@ -232,7 +232,7 @@ void print_expression_ast(expression_node *root_node){
 }
 
 //check if a string is present in in given expression
-int string_present(token *list){
+int string_present(token *list, symbol_table *table){
 
 	int flag = 0;
 
@@ -244,6 +244,17 @@ int string_present(token *list){
 
 			flag = 1;
 			break;
+
+		}else if( strncmp( t->type, "T_IDENTIFIER", 12 )  == 0){
+
+			symbol *s = search_symbol(table, t->content);		
+
+			if( strncmp(s->data_type, "STRING", 6) == 0){
+
+				flag = 1;
+				break;
+
+			}
 
 		}
 
@@ -282,7 +293,7 @@ int is_valid_string_expr(token *list){
 }
 
 //evaluate expression tree and return the answer
-char* evaluate_expression_ast(token_list *node, error_list *err_list, symbol_table *table , size_t line){
+char* evaluate_expression_ast(token_list *node, error_list *err_list, symbol_table *table , size_t line, int *STRING_FLAG){
 
 	if(node->token_count == 1){
 
@@ -298,11 +309,13 @@ char* evaluate_expression_ast(token_list *node, error_list *err_list, symbol_tab
 
 	//check if the exporession has a string value
 
-	if(string_present(t) == 1){
+	if(string_present(t, table) == 1){
 
 		//checking if the string only has + or T_PLUS operator
 
 		if(is_valid_string_expr(t) == 0){
+
+			*STRING_FLAG = 1;
 
 			while( t != NULL ){
 				
@@ -320,7 +333,6 @@ char* evaluate_expression_ast(token_list *node, error_list *err_list, symbol_tab
 						push(STACK, t);
 
 					}else{
-
 
 						size_t err_msg_len = strlen(t->content) + ERR_MSG_VAR_NOT_PRESENT_LEN;
 
@@ -340,19 +352,53 @@ char* evaluate_expression_ast(token_list *node, error_list *err_list, symbol_tab
 
 					//add all the string
 
-					char *answer;
+					char *answer, *left_operand, *right_operand;
 
 					token *left = pop(STACK);
 					token *right = pop(STACK);
 
+					if(  strncmp(left->type, "T_IDENTIFIER", 12) == 0 || 
+					 	strncmp(right->type, "T_IDENTIFIER", 12) == 0){
+
+						if( strncmp(left->type, "T_IDENTIFIER", 12) == 0 &&
+							strncmp(right->type, "T_IDENTIFIER", 12) != 0){
+				
+							symbol *s = search_symbol(table, left->content);
+							left_operand = s->value;
+							right_operand = right->content;
+
+						}else if( strncmp(right->type, "T_IDENTIFIER", 12) == 0 &&
+						  	      strncmp(left->type, "T_IDENTIFIER", 12) != 0){
+
+							symbol *s = search_symbol(table, right->content);
+							right_operand = s->value;
+							left_operand = left->content;
+
+						}else{
+
+							symbol *l = search_symbol(table, left->content);
+							symbol *r = search_symbol(table, right->content);
+	
+							left_operand = l->value;
+							right_operand = r->value;
+
+						}
+ 
+					}else{
+
+						left_operand = left->content;
+						right_operand = right->content;
+
+					}
+
 					if( strncmp(t->type, "T_PLUS", 6 ) == 0){
 
-						answer = calloc( strlen(left->content) + strlen(right->content), sizeof(char));
+						answer = calloc( strlen(left_operand) + strlen(right_operand), sizeof(char));
 
-						snprintf(answer, strlen(left->content) + strlen(right->content) + 1,
+						snprintf(answer, strlen(left_operand) + strlen(right_operand) + 1,
 										"%s%s",
-										left->content,
-										right->content);
+										left_operand,
+										right_operand);
 
 						push(STACK, new_token("T_STRING", answer));
 
