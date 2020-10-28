@@ -1,5 +1,3 @@
-#include <stdio.h>
-#include <ctype.h>
 #include <stdlib.h>
 #include <string.h>
 #include "HEADER/compiler.h"
@@ -10,9 +8,9 @@
 int main(int argc, char *argv[]){
 
 	lexer *l = new_lexer(
-		"var c = 45 \n"
-		"var a = 10\n"
-		"var b = c + a\n"
+		"var a = \"hello\"\n"
+		"var b\n"
+		"b = a+\" world \"+10\n"
 		"\0" );
 
 	parser *p = new_parser(l);

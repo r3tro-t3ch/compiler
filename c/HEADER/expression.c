@@ -297,6 +297,12 @@ char* evaluate_expression_ast(token_list *node, error_list *err_list, symbol_tab
 
 	if(node->token_count == 1){
 
+		if(string_present(node->first_token, table) == 1){
+			if(is_valid_string_expr(node->first_token) == 0){
+				*STRING_FLAG = 1;
+			}
+		}
+
 		return node->first_token->content;
 
 	}
@@ -409,6 +415,7 @@ char* evaluate_expression_ast(token_list *node, error_list *err_list, symbol_tab
 				t = t->next_token;
 
 			}
+
 
 			return STACK->top->content;
 

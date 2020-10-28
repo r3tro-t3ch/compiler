@@ -77,7 +77,7 @@ void visitor_evaluate(ast_l *ast_list, error_list* err_list){
 	char *reset_code = calloc(200, sizeof(char));
 	char *delay_function = NULL;
 	char *timer_overflow_handler = calloc(200, sizeof(char));
-//	char *serial_output_function;
+	char *serial_output_function;
 
 
 	while(t_ast != NULL){
@@ -110,6 +110,7 @@ void visitor_evaluate(ast_l *ast_list, error_list* err_list){
 											answer,
 											"T_IDENTIFIER");
 
+
 					}else{
 					
 						s = new_var_symbol( t_ast->var_def_var_name,
@@ -119,6 +120,7 @@ void visitor_evaluate(ast_l *ast_list, error_list* err_list){
 					}
 
 					add_new_symbol(table, s);
+
 				}
 
 			}else{
@@ -135,93 +137,6 @@ void visitor_evaluate(ast_l *ast_list, error_list* err_list){
 
 			}
 			
-		}else if( strncmp(t_ast->type, "AST_VAR_DEF", 11) == 0 ){
-
-			temp_s = search_symbol(table, t_ast->var_def_var_name);
-
-			//checking if the give variable name is present or not
-			//else raise an error
-
-			if(temp_s == NULL){
-
-				/*                IMPLEMENTING EXPRESSION EVAL                */
-
-				
-					s = new_var_symbol( t_ast->var_def_var_name,
-										"NA",
-										"NA");
-				
-					add_new_symbol(table, s);
-
-			}else{
-
-				size_t err_msg_len = strlen(t_ast->var_def_var_name) + ERR_MSG_VAR_PRESENT_LEN;
-
-				char *err_msg = calloc(err_msg_len, sizeof(char));
-
-				snprintf(err_msg, err_msg_len,
-						 "variable %s is already declared\n",
-						 t_ast->var_def_var_name);
-
-				add_new_error(err_list, new_error(err_msg, t_ast->ast_node_index));
-
-			}
-		
-		}else if( strncmp(t_ast->type, "AST_VAR_ASSIGNMENT", 18) == 0){
-
-			temp_s = search_symbol(table, t_ast->var_name);
-
-			//checking if the give variable name is present or not
-			//else raise an error
-
-			if(temp_s != NULL){
-
-				/*                IMPLEMENTING EXPRESSION EVAL                */
-
-				token_list* list = t_ast->var_expr;
-
-				int FLAG = 0;
-				int *STRING_FLAG = &FLAG;
-
-				char* answer = evaluate_expression_ast(list, err_list, table, t_ast->ast_node_index, STRING_FLAG);
-
-				if(answer != NULL){
-
-					printf("ans = %s \n",  answer);
-
-					if(*STRING_FLAG == 0){
-
-						temp_s->value = answer;
-
-						update_symbol( 	table,
-									 	temp_s);
-
-
-					}else{
-					
-						temp_s->value = answer;
-
-						update_symbol( 	table,
-									 	temp_s);
-
-					}
-
-				}
-
-			}else{
-
-				size_t err_msg_len = strlen(t_ast->var_name) + ERR_MSG_VAR_NOT_PRESENT_LEN;
-
-				char *err_msg = calloc(err_msg_len, sizeof(char));
-
-				snprintf(err_msg, err_msg_len,
-						 "variable %s is not declared\n",
-						 t_ast->var_name);
-
-				add_new_error(err_list, new_error(err_msg, t_ast->ast_node_index));
-
-			}
-
 		}else if( strncmp(t_ast->type,"AST_BUILTIN_FUNCTION_CALL",26) == 0 ){
 
 			if(is_builtin_function(t_ast->function_name) == 1){
@@ -597,7 +512,7 @@ void visitor_evaluate(ast_l *ast_list, error_list* err_list){
 								
 						}
 
-					}else if( strncmp(first_arg->arg_type, "T_KEYWORD", 9) == 0 ){
+					}else if( strncmp(first_arg->arg_type, "T_STRING", 8) == 0 ){
 
 						if( strncmp(first_arg->arg_name,"serial", 6) == 0 ){
 
@@ -634,7 +549,6 @@ void visitor_evaluate(ast_l *ast_list, error_list* err_list){
 						}
 
 					}
-
 				}else if(strncmp(t_ast->function_name,"wait",4) == 0){
 
 					//wait

@@ -45,6 +45,6 @@ void print_symbol_table(symbol_table *table);
 symbol* search_symbol(symbol_table *table, char *s);
 
 //update symbols on symbol table
-int update_symbol(symbol_table *table, symbol *s);
+int update_symbol(symbol_table *table, symbol *s );
 
 #endif
