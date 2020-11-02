@@ -20,6 +20,11 @@ typedef struct CODE{
 	char *delay_function;
 	char *timer_overflow_handler;
 	char *serial_output_function;
+	char *DSEG;
+
+
+	//flags
+	int DSEG_FLAG;
 
 } code;
 

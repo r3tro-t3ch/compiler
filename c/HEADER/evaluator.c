@@ -48,11 +48,10 @@ char* use_register(char *register_list[]){
 //input function call code generation
 void input_function_code_gen(char *reg, char *first_arg, code *asm_code, error_list *err_list, ast *t_ast){
 
-	if(strncmp(reg, "NA", 2) == 0){
 
-		reg = use_register(register_list);
+	char *temp_reg = use_register(register_list);
 
-	}
+	
 
 	char *input_code = calloc(300, sizeof(char));
 
@@ -66,9 +65,12 @@ void input_function_code_gen(char *reg, char *first_arg, code *asm_code, error_l
 					"\tnop\n"
 					"\tin %s, 32\n"
 					"\tandi %s, 32\n"
-					, reg, reg);	
+					"\tsts %s, %s\n"
+					, temp_reg, temp_reg, reg , temp_reg);	
 		
 		strncat(asm_code->asm_main_code, input_code, strlen(input_code));
+
+		register_index--;
 
 	}else if(strncmp(s,"12", 2) == 0){
 								
@@ -78,9 +80,12 @@ void input_function_code_gen(char *reg, char *first_arg, code *asm_code, error_l
 					"\tnop\n"
 					"\tin %s, 16\n"
 					"\tandi %s, 16\n"
-					, reg, reg);	
+					"\tsts %s, %s\n"
+					, temp_reg, temp_reg, reg, temp_reg);	
 		
 		strncat(asm_code->asm_main_code, input_code, strlen(input_code));
+
+		register_index--;
 
 	}else if(strncmp(s,"11", 2) == 0){
 
@@ -90,9 +95,12 @@ void input_function_code_gen(char *reg, char *first_arg, code *asm_code, error_l
 					"\tnop\n"
 					"\tin %s, 8\n"
 					"\tandi %s, 8\n"
-					, reg, reg);	
+					"\tsts %s, %s\n"
+					,temp_reg, temp_reg ,reg, temp_reg);	
 		
 		strncat(asm_code->asm_main_code, input_code, strlen(input_code));
+
+		register_index--;
 
 	}else if(strncmp(s,"10", 2) == 0){
 								
@@ -102,9 +110,12 @@ void input_function_code_gen(char *reg, char *first_arg, code *asm_code, error_l
 					"\tnop\n"
 					"\tin %s, 4\n"
 					"\tandi %s, 4\n"
-					, reg, reg);	
+					"\tsts %s, %s\n"
+					,temp_reg, temp_reg, reg, temp_reg);	
 		
 		strncat(asm_code->asm_main_code, input_code, strlen(input_code));
+		
+		register_index--;
 							
 	}else if(strncmp(s,"9", 1) == 0){
 
@@ -114,9 +125,12 @@ void input_function_code_gen(char *reg, char *first_arg, code *asm_code, error_l
 					"\tnop\n"
 					"\tin %s, 2\n"
 					"\tandi %s, 2\n"
-					, reg, reg);	
+					"\tsts %s, %s\n"
+					,temp_reg, temp_reg, reg, temp_reg);	
 		
 		strncat(asm_code->asm_main_code, input_code, strlen(input_code));
+		
+		register_index--;
 
 	}else if(strncmp(s,"8", 1) == 0){
 
@@ -126,9 +140,12 @@ void input_function_code_gen(char *reg, char *first_arg, code *asm_code, error_l
 					"\tnop\n"
 					"\tin %s, 1\n"
 					"\tandi %s, 1\n"
-					, reg, reg);	
+					"\tsts %s, %s\n"
+					,temp_reg, temp_reg, reg, temp_reg);	
 		
 		strncat(asm_code->asm_main_code, input_code, strlen(input_code));
+		
+		register_index--;
 
 	}else if(strncmp(s,"7", 1) == 0){
 
@@ -138,21 +155,26 @@ void input_function_code_gen(char *reg, char *first_arg, code *asm_code, error_l
 					"\tnop\n"
 					"\tin %s, 128\n"
 					"\tandi %s, 128\n"
-					, reg, reg);	
+					"\tsts %s, %s\n"
+					,temp_reg, temp_reg, reg, temp_reg);	
 		
 		strncat(asm_code->asm_main_code, input_code, strlen(input_code));
+		register_index--;
 
 	}else if(strncmp(s,"6", 1) == 0){
 
 		strncat(asm_code->asm_setup_code,"\tcbi DDRD, 6\n", 14);
+		register_index--;
 
 		sprintf(input_code,
 					"\tnop\n"
 					"\tin %s, 64\n"
 					"\tandi %s, 64\n"
-					, reg, reg);	
+					"\tsts %s, %s\n"
+					,temp_reg, temp_reg, reg, temp_reg);	
 		
 		strncat(asm_code->asm_main_code, input_code, strlen(input_code));
+		register_index--;
 
 	}else if(strncmp(s,"5", 1) == 0){
 
@@ -162,9 +184,11 @@ void input_function_code_gen(char *reg, char *first_arg, code *asm_code, error_l
 					"\tnop\n"
 					"\tin %s, 32\n"
 					"\tandi %s, 32\n"
-					, reg, reg);	
+					"\tsts %s, %s\n"
+					,temp_reg, temp_reg, reg, temp_reg);	
 		
 		strncat(asm_code->asm_main_code, input_code, strlen(input_code));
+		register_index--;
 
 	}else if(strncmp(s,"4", 1) == 0){
 
@@ -174,9 +198,11 @@ void input_function_code_gen(char *reg, char *first_arg, code *asm_code, error_l
 					"\tnop\n"
 					"\tin %s, 16\n"
 					"\tandi %s, 16\n"
-					, reg, reg);	
+					"\tsts %s, %s\n"
+					,temp_reg,temp_reg, reg,temp_reg);	
 		
 		strncat(asm_code->asm_main_code, input_code, strlen(input_code));
+		register_index--;
 
 	}else if(strncmp(s,"3", 1) == 0){
 
@@ -186,9 +212,11 @@ void input_function_code_gen(char *reg, char *first_arg, code *asm_code, error_l
 					"\tnop\n"
 					"\tin %s,  8\n"
 					"\tandi %s,  8\n"
-					, reg, reg);	
+					"\tsts %s, %s\n"
+					,temp_reg,temp_reg, reg,temp_reg);	
 		
 		strncat(asm_code->asm_main_code, input_code, strlen(input_code));
+		register_index--;
 
 	}else if(strncmp(s,"2", 1) == 0){
 
@@ -198,10 +226,12 @@ void input_function_code_gen(char *reg, char *first_arg, code *asm_code, error_l
 					"\tnop\n"
 					"\tin %s, 4\n"
 					"\tandi %s, 4\n"
-					, reg, reg);	
+					"\tsts %s, %s\n"
+					,temp_reg,temp_reg, reg,temp_reg);	
 		
 		strncat(asm_code->asm_main_code, input_code, strlen(input_code));
 
+		register_index--;
 	}else if(strncmp(s,"1", 1) == 0){
 
 		strncat(asm_code->asm_setup_code,"\tcbi DDRD, 1\n", 14);
@@ -210,9 +240,12 @@ void input_function_code_gen(char *reg, char *first_arg, code *asm_code, error_l
 					"\tnop\n"
 					"\tin %s, 2\n"
 					"\tandi %s, 2\n"
-					, reg, reg);	
+					"\tsts %s, %s\n"
+					,temp_reg,temp_reg, reg,temp_reg);	
 		
 		strncat(asm_code->asm_main_code, input_code, strlen(input_code));
+
+		register_index--;
 
 	}else if(strncmp(s,"0", 1) == 0){
 
@@ -222,9 +255,12 @@ void input_function_code_gen(char *reg, char *first_arg, code *asm_code, error_l
 					"\tnop\n"
 					"\tin %s, 1\n"
 					"\tandi %s, 1\n"
-					, reg, reg);	
+					"\tsts %s, %s\n"
+					,temp_reg,temp_reg, reg,temp_reg);	
 		
 		strncat(asm_code->asm_main_code, input_code, strlen(input_code));
+
+		register_index--;
 
 	}else{
 									
@@ -860,7 +896,10 @@ code* new_asm_code(){
 	c->reset_code = NULL;
 	c->serial_output_function = NULL;
 	c->timer_overflow_handler = NULL;
-	
+	c->DSEG = NULL;
+
+	c->DSEG_FLAG = 0;
+
 	return c;
 
 }
@@ -883,21 +922,32 @@ void visitor_evaluate(ast_l *ast_list, error_list* err_list){
 	asm_code->delay_function = NULL;
 	asm_code->timer_overflow_handler = calloc(200, sizeof(char));
 	asm_code->serial_output_function = NULL;
-
+	asm_code->DSEG = calloc(300 , sizeof(char));
 
 	while(t_ast != NULL){
 
 		if( strncmp(t_ast->type, "AST_VAR_DEF_ASSIGNMENT_FUNCTION", 31) == 0){
 
+
 			temp_s = search_symbol(table, t_ast->var_def_var_name);
 
 			if(temp_s == NULL){
 
-				char *reg = use_register(register_list);
+				char *temp_code = calloc(100, sizeof(char));
 
-				add_new_symbol(table, new_var_symbol(t_ast->var_def_var_name,reg, "T_REGISTER"));
+				sprintf(temp_code,
+						"\t%s: .BYTE 1\n",
+						t_ast->var_def_var_name);
 
-				visitor_evaluate_input_funtion_call(reg, t_ast, err_list, asm_code, table);
+				strncat(asm_code->DSEG, temp_code, strlen(temp_code));
+
+				asm_code->DSEG_FLAG = 1;
+
+				//char *reg = use_register(register_list);
+
+				add_new_symbol(table, new_var_symbol(t_ast->var_def_var_name,t_ast->var_def_var_name, "DSEG_VAR"));
+
+				visitor_evaluate_input_funtion_call(t_ast->var_def_var_name, t_ast, err_list, asm_code, table);
 
 			}else{
 
@@ -1004,11 +1054,19 @@ void visitor_evaluate(ast_l *ast_list, error_list* err_list){
 
 			if( temp_s != NULL ){
 
-				char *reg = use_register(register_list);
+				char *temp_code = calloc(100, sizeof(char));
 
-				update_symbol(table, new_var_symbol(t_ast->var_name, reg, "T_REGISTER"));
+				sprintf(temp_code,
+						"\t%s: .BYTE 1\n",
+						t_ast->var_name);
 
-				visitor_evaluate_input_funtion_call(reg, t_ast, err_list, asm_code, table);
+				strncat(asm_code->DSEG, temp_code, strlen(temp_code));
+
+				asm_code->DSEG_FLAG = 1;
+
+				update_symbol(table, new_var_symbol(t_ast->var_name, t_ast->var_name, "T_REGISTER"));
+
+				visitor_evaluate_input_funtion_call(t_ast->var_name, t_ast, err_list, asm_code, table);
 			
 			}else{
 
@@ -1107,6 +1165,14 @@ void visitor_evaluate(ast_l *ast_list, error_list* err_list){
 				  ";**************************************************\n\n\n");
 
 		fprintf(f,".include \"./m328Pdef.inc\"\n\n\n");
+
+		if(asm_code->DSEG_FLAG == 1){
+
+			fprintf(f, ".DSEG\n");
+			fprintf(f, "%s", asm_code->DSEG);
+			fprintf(f, ".CSEG\n");
+
+		}
 
 		if(asm_code->delay_function != NULL){
 			fprintf(f,"%s", asm_code->code_init);

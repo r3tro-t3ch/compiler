@@ -31,9 +31,9 @@ symbol* new_var_symbol(char *var_name, char *value, char *data_type){
 
 		var->data_type = "STRING";
 
-	}else if( strncmp(data_type, "T_REGISTER", 10) == 0 ){
+	}else if( strncmp(data_type, "DSEG_VAR", 8) == 0 ){
 
-		var->data_type = "REGISTER";
+		var->data_type = "DSEG_VAR";
 
 	}else{
 

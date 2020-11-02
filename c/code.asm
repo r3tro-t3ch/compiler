@@ -9,23 +9,25 @@
 .include "./m328Pdef.inc"
 
 
+.DSEG
+	a: .BYTE 1
+	b: .BYTE 1
+.CSEG
 
 setup:
-	cbi DDRB, 5
 	cbi DDRB, 4
 	cbi DDRB, 2
 
 
 main:
 	nop
-	in r16, 32
-	andi r16, 32
+	in r16, 16
+	andi r16, 16
+	sts a, r16
 	nop
-	in r17, 16
-	andi r17, 16
-	nop
-	in r18, 4
-	andi r18, 4
+	in r16, 4
+	andi r16, 4
+	sts b, r16
 
 
 end:

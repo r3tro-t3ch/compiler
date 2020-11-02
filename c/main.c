@@ -8,7 +8,6 @@
 int main(int argc, char *argv[]){
 
 	lexer *l = new_lexer(
-		"input(13)\n"
 		"var a\n"
 		"a = input(12)\n"
 		"var b = input(10)\n"
