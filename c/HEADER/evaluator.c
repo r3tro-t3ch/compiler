@@ -887,7 +887,33 @@ void visitor_evaluate(ast_l *ast_list, error_list* err_list){
 
 	while(t_ast != NULL){
 
-		if( strncmp(t_ast->type, "AST_VAR_DEF_ASSIGNMENT", 22) == 0){
+		if( strncmp(t_ast->type, "AST_VAR_DEF_ASSIGNMENT_FUNCTION", 31) == 0){
+
+			temp_s = search_symbol(table, t_ast->var_def_var_name);
+
+			if(temp_s == NULL){
+
+				char *reg = use_register(register_list);
+
+				add_new_symbol(table, new_var_symbol(t_ast->var_def_var_name,reg, "T_REGISTER"));
+
+				visitor_evaluate_input_funtion_call(reg, t_ast, err_list, asm_code, table);
+
+			}else{
+
+				size_t err_msg_len = strlen(t_ast->var_def_var_name) + ERR_MSG_VAR_PRESENT_LEN;
+
+				char *err_msg = calloc(err_msg_len, sizeof(char));
+
+				snprintf(err_msg, err_msg_len,
+						 "variable %s is already declared\n",
+						 t_ast->var_def_var_name);
+
+				add_new_error(err_list, new_error(err_msg, t_ast->ast_node_index));
+
+			}
+
+		}else if( strncmp(t_ast->type, "AST_VAR_DEF_ASSIGNMENT", 22) == 0){
 
 			temp_s = search_symbol(table, t_ast->var_def_var_name);
 
@@ -974,19 +1000,30 @@ void visitor_evaluate(ast_l *ast_list, error_list* err_list){
 		
 		}else if( strncmp(t_ast->type, "AST_VAR_ASSIGNMENT_FUNCTION", 28) == 0 ){
 
-
-			/*
-			temp_s = search_symbol(table, t_ast->args_list->first_arg->arg_name);
+			temp_s = search_symbol(table, t_ast->var_name);
 
 			if( temp_s != NULL ){
-	
-			}*/
 
-			char *reg = use_register(register_list);
+				char *reg = use_register(register_list);
 
-			add_new_symbol(table, new_var_symbol(t_ast->args_list->first_arg->arg_name, reg, "T_REGISTER"));
+				update_symbol(table, new_var_symbol(t_ast->var_name, reg, "T_REGISTER"));
 
-			visitor_evaluate_input_funtion_call(reg, t_ast, err_list, asm_code, table);
+				visitor_evaluate_input_funtion_call(reg, t_ast, err_list, asm_code, table);
+			
+			}else{
+
+				size_t err_msg_len = strlen(t_ast->var_name) + ERR_MSG_VAR_NOT_PRESENT_LEN;
+
+				char *err_msg = calloc(err_msg_len, sizeof(char));
+
+				snprintf(err_msg, err_msg_len,
+						 "variable %s is not declared\n",
+						 t_ast->var_name);
+
+				add_new_error(err_list, new_error(err_msg, t_ast->ast_node_index));
+
+			}
+
 
 		}else if( strncmp(t_ast->type, "AST_VAR_ASSIGNMENT", 18) == 0){
 
@@ -1057,6 +1094,8 @@ void visitor_evaluate(ast_l *ast_list, error_list* err_list){
 		print_errors(err_list);
 		exit(0);
 	}else{
+
+		print_symbol_table(table);
 
 		FILE *f = fopen("code.asm","w+");
 

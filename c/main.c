@@ -11,6 +11,7 @@ int main(int argc, char *argv[]){
 		"input(13)\n"
 		"var a\n"
 		"a = input(12)\n"
+		"var b = input(10)\n"
 		"\0" );
 
 	parser *p = new_parser(l);

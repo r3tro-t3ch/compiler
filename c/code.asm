@@ -13,6 +13,7 @@
 setup:
 	cbi DDRB, 5
 	cbi DDRB, 4
+	cbi DDRB, 2
 
 
 main:
@@ -22,6 +23,9 @@ main:
 	nop
 	in r17, 16
 	andi r17, 16
+	nop
+	in r18, 4
+	andi r18, 4
 
 
 end:

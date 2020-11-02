@@ -774,7 +774,26 @@ ast* parse_var_def( parser *p, error_list *err_list, ast_l* ast_list){
 			strncmp(t->type,"T_IDENTIFIER", 12) == 0 ||
 			strncmp(t->type,"T_STRING", 9) == 0 ){
 
-		
+			if(	strncmp( t->type, "T_IDENTIFIER", 12 ) == 0 ){
+	
+				if( is_builtin_function(t->content) == 1 ){
+
+					get_next_token(p);
+
+					ast *temp =	parse_function_call(p, err_list, ast_list);
+
+					a->type = "AST_VAR_DEF_ASSIGNMENT_FUNCTION";
+
+					a->function_name = temp->function_name;
+					a->args_count = temp->args_count;
+					a->args_list = temp->args_list;
+
+					a->ast_node_index = ast_list->line_count;
+					return a;
+
+				}
+			}
+
 			a->var_def_var_expr = parse_expressions(p);
 
 			if(is_postfix_valid(a->var_def_var_expr) == 0){
