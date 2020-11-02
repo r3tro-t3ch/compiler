@@ -89,13 +89,12 @@ typedef struct AST{
 	//variable definition and assignment
 	char *var_def_var_name;
 	char *var_def_var_type;
-	char *var_def_var_content;
 	token_list *var_def_var_expr;
-	
+
 	//variable assignment
 	char *var_name;
 	char *var_type;
-	char *var_content;
+	char *var_return_val;
 	token_list *var_expr;
 
 } ast;

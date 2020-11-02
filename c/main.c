@@ -8,9 +8,9 @@
 int main(int argc, char *argv[]){
 
 	lexer *l = new_lexer(
-		"var a = \"hello\"\n"
-		"var b\n"
-		"b = a+\" world \"+10\n"
+		"input(13)\n"
+		"var a\n"
+		"a = input(12)\n"
 		"\0" );
 
 	parser *p = new_parser(l);
@@ -25,7 +25,7 @@ int main(int argc, char *argv[]){
 
 	}else{
 
-		//print_ast(ast_list);
+		print_ast(ast_list);
 		visitor_evaluate(ast_list, err_list);
 		//print_symbol_table(table);
 

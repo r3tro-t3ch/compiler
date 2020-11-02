@@ -518,13 +518,12 @@ ast* new_ast(char *type){
 	//variable definition and assignment
 	_ast->var_def_var_name = (void *) 0;
 	_ast->var_def_var_type = (void *) 0;
-	_ast->var_def_var_content = (void *) 0;
 	_ast->var_def_var_expr = (void *) 0;
 
 	//variable assignment
 	_ast->var_name = (void *) 0;
 	_ast->var_type = (void *) 0;
-	_ast->var_content = (void *) 0;
+	_ast->var_return_val = (void *) 0;
 	_ast->var_expr = (void *) 0;
 
 	return _ast;
@@ -869,20 +868,32 @@ ast* parse_var_assignment(parser *p,error_list *err_list,  ast_l *ast_list){
 		strncmp( t->type, "T_STRING", 8 ) == 0 ||
 		strncmp( t->type, "T_IDENTIFIER", 12 ) == 0	){
 
-		/*get_next_token(p); // constant value
 
-		if(parser_eat(get_current_token(p),"T_CONSTANT", err_list, ast_list->line_count) == 0){
+		if(	strncmp( t->type, "T_IDENTIFIER", 12 ) == 0 ){
 
-			error_flag = 1;
-			return NULL;
+			if( is_builtin_function(t->content) == 1 ){
+
+				get_next_token(p);
+
+				ast *temp =	parse_function_call(p, err_list, ast_list);
+
+				node->type = "AST_VAR_ASSIGNMENT_FUNCTION";
+
+				node->function_name = temp->function_name;
+				node->args_count = temp->args_count;
+				node->args_list = temp->args_list;
+
+				node->ast_node_index = ast_list->line_count;
+				return node;
+
+			}			
 
 		}
-*/
+
 		node->type = "AST_VAR_ASSIGNMENT";
 		node->var_expr = parse_expressions(p);
 
 		if(is_postfix_valid(node->var_expr) == 0){
-
 
 			error *e = new_error("Invalid expression", ast_list->line_count);
 
@@ -897,11 +908,11 @@ ast* parse_var_assignment(parser *p,error_list *err_list,  ast_l *ast_list){
 		node->ast_node_index = ast_list->line_count;
 
 
-	}else{
+	}/*else{
 
 		parse_function_call(p, err_list, ast_list);
 
-	}
+	}*/
 
 	
 	if(error_flag == 0){
@@ -1083,10 +1094,11 @@ ast* parse_function_call(parser *p,error_list *err_list,  ast_l *ast_list){
 
 		}else if( strncmp(get_current_token(p)->content, "input", 6)== 0){
 		
-			get_next_token(p); // (
 
 			node->function_name = get_current_token(p)->content;
 
+			get_next_token(p); // (
+			
 			if( parser_eat(get_current_token(p), "T_LPAREN", err_list, ast_list->line_count ) == 0){
 
 				error_flag = 1;
@@ -1132,68 +1144,7 @@ ast* parse_function_call(parser *p,error_list *err_list,  ast_l *ast_list){
 
 			}
 
-			get_next_token(p);
-
-			if( parser_eat( get_current_token(p), "T_COMMA", err_list, ast_list->line_count  ) == 0 ){
-
-					error_flag = 1;
-					return NULL;
-
-			}
-
-			temp = peek_next_token(p);
-
-			if( strncmp(temp->type, "T_CONSTANT", 10) == 0 ){
-
-				get_next_token(p); //second arg
-
-				if( parser_eat(get_current_token(p), "T_CONSTANT", err_list, ast_list->line_count ) == 0 ){
-
-					error_flag = 1;
-					return NULL;
-
-				}
-
-				function_args *arg = new_function_argument(get_current_token(p)->content, get_current_token(p)->type);
-
-				add_new_arg(node->args_list, arg);
-
-				node->args_count++;
-
-
-			}else if( strncmp(temp->type, "T_IDENTIFIER", 12) == 0 ){
-
-				get_next_token(p); //second arg
-
-				if( parser_eat(get_current_token(p), "T_IDENTFIER", err_list, ast_list->line_count ) == 0 ){
-
-					error_flag = 1;
-					return NULL;
-
-				}
-
-				function_args *arg = new_function_argument(get_current_token(p)->content, get_current_token(p)->type);
-
-				add_new_arg(node->args_list, arg);
-				node->args_count++;
-
-			}else if( strncmp(temp->type, "T_KEYWORD", 9) == 0 ){
-
-				get_next_token(p); //second arg
-
-				if( parser_eat(get_current_token(p), "T_KEYWORD", err_list, ast_list->line_count ) == 0 ){
-
-					error_flag = 1;
-					return NULL;
-
-				}
-
-				function_args *arg = new_function_argument(get_current_token(p)->content, get_current_token(p)->type);
-
-				add_new_arg(node->args_list, arg);
-				node->args_count++;
-
-			}
+			//get_next_token(p);
 
 		}else if( strncmp(get_current_token(p)->content, "wait", 4) == 0 ){
 
