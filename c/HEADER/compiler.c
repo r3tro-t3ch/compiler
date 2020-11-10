@@ -80,7 +80,6 @@ int is_builtin_function(char *identifier){
 
 	for(int i = 0; i < BUILTIN_FUN_COUNT; i++){
 		if(strcmp(BUILTIN_FUNCTION[i],identifier) == 0){
-			//fprintf(stdout, " %s , %s \t ", identifier, KEYWORD[i]);
 			SEARCH_FLAG = true;
 			break;
 		}
@@ -295,24 +294,74 @@ token* get_next_token(parser *p){
 				break;
 			 }
 		case '=':{
-				t = new_token("T_EQUAL", char_to_str(p->l->current_char));
-				p->current_token = t;
-				next_char(p->l);
-				return t;
+
+				char next = p->l->code[p->l->index+1];
+
+				if( next == '=' ){
+
+					t = new_token("T_EE", "==");
+					p->current_token = t;
+					next_char(p->l);
+					next_char(p->l);
+					return t;
+
+				}else{
+
+					t = new_token("T_EQUAL", char_to_str(p->l->current_char));
+					p->current_token = t;
+					next_char(p->l);
+					return t;
+
+				}
+
 				break;
 			 }
 		case '>':{
-				t = new_token("T_GREATER", char_to_str(p->l->current_char));
-				p->current_token = t;
-				next_char(p->l);
-				return t;
+					 
+				char next = p->l->code[p->l->index+1];
+
+				if( next == '=' ){
+
+					printf("here\n");
+					t = new_token("T_GE", ">=");
+					p->current_token = t;
+					next_char(p->l);
+					next_char(p->l);
+					return t;
+
+				}else{
+
+					t = new_token("T_GREATER", char_to_str(p->l->current_char));
+					p->current_token = t;
+					next_char(p->l);
+					return t;
+
+				}
+				
 				break;
-			 }
+				
+			}
 		case '<':{
-				t = new_token("T_LESSER", char_to_str(p->l->current_char));
-				p->current_token = t;
-				next_char(p->l);
-				return t;
+			
+				char next = p->l->code[p->l->index+1];
+
+				if(next == '='){
+
+					t = new_token("T_LE", "<=");
+					p->current_token = t;
+					next_char(p->l);
+					next_char(p->l);
+					return t;
+
+				}else{
+
+					t = new_token("T_LESSER", char_to_str(p->l->current_char));
+					p->current_token = t;
+					next_char(p->l);
+					return t;
+
+				}
+
 				break;
 			 }
 		case ',':{
@@ -455,21 +504,63 @@ token* peek_next_token(parser *p){
 				break;
 			 }
 		case '=':{
-				t = new_token("T_EQUAL", char_to_str(p->l->current_char));
-				next_char(temp_p->l);
-				return t;
+				
+				char next = p->l->code[p->l->index+1];
+				
+				if( next == '=' ){
+
+					t = new_token("T_EE", "==");
+					next_char(temp_p->l);
+					next_char(temp_p->l);
+					return t;
+
+				}else{
+
+					t = new_token("T_EQUAL", char_to_str(p->l->current_char));
+					next_char(temp_p->l);
+					return t;
+
+				}
+
 				break;
 			 }
 		case '>':{
-				t = new_token("T_GREATER", char_to_str(p->l->current_char));
-				next_char(temp_p->l);
-				return t;
+					
+				char next = p->l->code[p->l->index+1];
+				
+				if( next == '=' ){
+
+					t = new_token("T_GE", ">=");
+					next_char(temp_p->l);
+					next_char(temp_p->l);
+					return t;
+
+				}else{
+
+					t = new_token("T_GREATER", char_to_str(p->l->current_char));
+					next_char(temp_p->l);
+					return t;
+				
+				}
 				break;
 			 }
 		case '<':{
-				t = new_token("T_LESSER", char_to_str(p->l->current_char));
-				next_char(temp_p->l);
-				return t;
+					
+				char next = p->l->code[p->l->index+1];
+				
+				if( next == '=' ){
+
+					t = new_token("T_LE", "<=");
+					next_char(temp_p->l);
+					next_char(temp_p->l);
+					return t;
+
+				}else{
+
+					t = new_token("T_LESSER", char_to_str(p->l->current_char));
+					next_char(temp_p->l);
+					return t;
+				}
 				break;
 			 }
 		case ',':{
