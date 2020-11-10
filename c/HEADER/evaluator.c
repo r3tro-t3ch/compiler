@@ -314,567 +314,390 @@ void visitor_evaluate_input_funtion_call(char *reg,  ast *t_ast, error_list *err
 
 }
 
-//evaluate function calls
-void visitor_evaluate_function_call(ast *t_ast, error_list *err_list, code *asm_code, symbol_table *table){
+//output function call code generation
+void output_function_code_gen(char *value, char *second_arg, code *asm_code, error_list *err_list, ast *t_ast){
 
-	symbol *s;
+	if(strncmp(second_arg,"HIGH", 4) == 0){
 
-	if(is_builtin_function(t_ast->function_name) == 1){
+		if(strncmp(value,"13", 2) == 0){
 
-		if(strncmp(t_ast->function_name,"output",6) == 0){
-
-			function_args *first_arg = t_ast->args_list->first_arg;
-			function_args *second_arg = t_ast->args_list->last_arg;
+			strncat(asm_code->asm_setup_code,"\tsbi DDRB, 5\n", 14);
+			strncat(asm_code->asm_main_code, "\tsbi PortB, 5\n", 15);
 				
-			if(strncmp(first_arg->arg_type,"T_IDENTIFIER",12) == 0){
-					
-				if(strncmp(second_arg->arg_name,"HIGH", 4) == 0){
+		}else if(strncmp(value,"12", 2) == 0){
+								
+			strncat(asm_code->asm_setup_code,"\tsbi DDRB, 4\n", 14);
+			strncat(asm_code->asm_main_code, "\tsbi PortB, 4\n", 15);
 
-					s = search_symbol(table, first_arg->arg_name);
+		}else if(strncmp(value,"11", 2) == 0){
 
-					if(s != NULL){
+			strncat(asm_code->asm_setup_code,"\tsbi DDRB, 3\n", 14);
+			strncat(asm_code->asm_main_code, "\tsbi PortB, 3\n", 15);
+
+		}else if(strncmp(value,"10", 2) == 0){
+								
+			strncat(asm_code->asm_setup_code,"\tsbi DDRB, 2\n", 14);
+			strncat(asm_code->asm_main_code, "\tsbi PortB, 2\n", 15);
+
+								
+		}else if(strncmp(value,"9", 1) == 0){
+
+			strncat(asm_code->asm_setup_code,"\tsbi DDRB, 1\n", 14);
+			strncat(asm_code->asm_main_code, "\tsbi PortB, 1\n", 15);
+
+		}else if(strncmp(value,"8", 1) == 0){
+
+			strncat(asm_code->asm_setup_code,"\tsbi DDRB, 0\n", 14);
+			strncat(asm_code->asm_main_code, "\tsbi PortB, 0\n", 15);
+
+		}else if(strncmp(value,"7", 1) == 0){
+
+			strncat(asm_code->asm_setup_code,"\tsbi DDRD, 7\n", 14);
+			strncat(asm_code->asm_main_code, "\tsbi PortD, 7\n", 15);
+
+		}else if(strncmp(value,"6", 1) == 0){
+
+			strncat(asm_code->asm_setup_code,"\tsbi DDRD, 6\n", 14);
+			strncat(asm_code->asm_main_code, "\tsbi PortD, 6\n", 15);
+
+		}else if(strncmp(value,"5", 1) == 0){
+
+			strncat(asm_code->asm_setup_code,"\tsbi DDRD, 5\n", 14);
+			strncat(asm_code->asm_main_code, "\tsbi PortD, 5\n", 15);
+
+		}else if(strncmp(value,"4", 1) == 0){
+
+			strncat(asm_code->asm_setup_code,"\tsbi DDRD, 4\n", 14);
+			strncat(asm_code->asm_main_code, "\tsbi PortD, 4\n", 15);
+
+		}else if(strncmp(value,"3", 1) == 0){
+
+			strncat(asm_code->asm_setup_code,"\tsbi DDRD, 3\n", 14);
+			strncat(asm_code->asm_main_code, "\tsbi PortD, 3\n", 15);
+
+		}else if(strncmp(value,"2", 1) == 0){
+
+			strncat(asm_code->asm_setup_code,"\tsbi DDRD, 2\n", 14);
+			strncat(asm_code->asm_main_code, "\tsbi PortD, 2\n", 15);
+
+		}else if(strncmp(value,"1", 1) == 0){
+
+			strncat(asm_code->asm_setup_code,"\tsbi DDRD, 1\n", 14);
+			strncat(asm_code->asm_main_code, "\tsbi PortD, 1\n", 15);
+
+		}else if(strncmp(value,"0", 1) == 0){
+
+			strncat(asm_code->asm_setup_code,"\tsbi DDRD, 0\n", 14);
+			strncat(asm_code->asm_main_code, "\tsbi PortD, 0\n", 15);
+
+		}else{
+									
+			char *err_msg = calloc(1,sizeof(char));
+
+			size_t err_msg_len = 31 + strlen(value);
+
+			snprintf(err_msg, err_msg_len, "Pin %s not present in atmega328p\n", value);
+
+			error *e = new_error(err_msg, t_ast->ast_node_index);
+
+			add_new_error(err_list,e);
+
+		}
 							
-						if(strncmp(s->value,"13", 2) == 0){
+	}else if(strncmp(second_arg,"LOW", 3) == 0){
 
-							strncat(asm_code->asm_setup_code,"\tsbi DDRB, 5\n", 14);
-							strncat(asm_code->asm_main_code, "\tsbi PortB, 5\n", 15);
+		//implement LOW
+							
+		if(strncmp(value,"13", 2) == 0){
+
+			strncat(asm_code->asm_main_code, "\tcbi PortB, 5\n", 15);
 				
-						}else if(strncmp(s->value,"12", 2) == 0){
+		}else if(strncmp(value,"12", 2) == 0){
 								
-							strncat(asm_code->asm_setup_code,"\tsbi DDRB, 4\n", 14);
-							strncat(asm_code->asm_main_code, "\tsbi PortB, 4\n", 15);
+			strncat(asm_code->asm_main_code, "\tcbi PortB, 4\n", 15);
 
-						}else if(strncmp(s->value,"11", 2) == 0){
+		}else if(strncmp(value,"11", 2) == 0){
 
-							strncat(asm_code->asm_setup_code,"\tsbi DDRB, 3\n", 14);
-							strncat(asm_code->asm_main_code, "\tsbi PortB, 3\n", 15);
+			strncat(asm_code->asm_main_code, "\tcbi PortB, 3\n", 15);
 
-						}else if(strncmp(s->value,"10", 2) == 0){
+		}else if(strncmp(value,"10", 2) == 0){
 								
-							strncat(asm_code->asm_setup_code,"\tsbi DDRB, 2\n", 14);
-							strncat(asm_code->asm_main_code, "\tsbi PortB, 2\n", 15);
-
+			strncat(asm_code->asm_main_code, "\tcbi PortB, 2\n", 15);
 								
-						}else if(strncmp(s->value,"9", 1) == 0){
+		}else if(strncmp(value,"9", 1) == 0){
 
-							strncat(asm_code->asm_setup_code,"\tsbi DDRB, 1\n", 14);
-							strncat(asm_code->asm_main_code, "\tsbi PortB, 1\n", 15);
+			strncat(asm_code->asm_main_code, "\tcbi PortB, 1\n", 15);
 
-						}else if(strncmp(s->value,"8", 1) == 0){
+		}else if(strncmp(value,"8", 1) == 0){
 
-							strncat(asm_code->asm_setup_code,"\tsbi DDRB, 0\n", 14);
-							strncat(asm_code->asm_main_code, "\tsbi PortB, 0\n", 15);
+			strncat(asm_code->asm_main_code, "\tcbi PortB, 0\n", 15);
 
-						}else if(strncmp(s->value,"7", 1) == 0){
+		}else if(strncmp(value,"7", 1) == 0){
 
-							strncat(asm_code->asm_setup_code,"\tsbi DDRD, 7\n", 14);
-							strncat(asm_code->asm_main_code, "\tsbi PortD, 7\n", 15);
+			strncat(asm_code->asm_main_code, "\tcbi PortD, 7\n", 15);
 
-						}else if(strncmp(s->value,"6", 1) == 0){
+		}else if(strncmp(value,"6", 1) == 0){
 
-							strncat(asm_code->asm_setup_code,"\tsbi DDRD, 6\n", 14);
-							strncat(asm_code->asm_main_code, "\tsbi PortD, 6\n", 15);
+			strncat(asm_code->asm_main_code, "\tcbi PortD, 6\n", 15);
 
-						}else if(strncmp(s->value,"5", 1) == 0){
+		}else if(strncmp(value,"5", 1) == 0){
 
-							strncat(asm_code->asm_setup_code,"\tsbi DDRD, 5\n", 14);
-							strncat(asm_code->asm_main_code, "\tsbi PortD, 5\n", 15);
+			strncat(asm_code->asm_main_code, "\tcbi PortD, 5\n", 15);
 
-						}else if(strncmp(s->value,"4", 1) == 0){
+		}else if(strncmp(value,"4", 1) == 0){
 
-							strncat(asm_code->asm_setup_code,"\tsbi DDRD, 4\n", 14);
-							strncat(asm_code->asm_main_code, "\tsbi PortD, 4\n", 15);
+			strncat(asm_code->asm_main_code, "\tcbi PortD, 4\n", 15);
 
-						}else if(strncmp(s->value,"3", 1) == 0){
+		}else if(strncmp(value,"3", 1) == 0){
 
-							strncat(asm_code->asm_setup_code,"\tsbi DDRD, 3\n", 14);
-							strncat(asm_code->asm_main_code, "\tsbi PortD, 3\n", 15);
+			strncat(asm_code->asm_main_code, "\tcbi PortD, 3\n", 15);
 
-						}else if(strncmp(s->value,"2", 1) == 0){
+		}else if(strncmp(value,"2", 1) == 0){
 
-							strncat(asm_code->asm_setup_code,"\tsbi DDRD, 2\n", 14);
-							strncat(asm_code->asm_main_code, "\tsbi PortD, 2\n", 15);
+			strncat(asm_code->asm_main_code, "\tcbi PortD, 2\n", 15);
 
-						}else if(strncmp(s->value,"1", 1) == 0){
+		}else if(strncmp(value,"1", 1) == 0){
 
-							strncat(asm_code->asm_setup_code,"\tsbi DDRD, 1\n", 14);
-							strncat(asm_code->asm_main_code, "\tsbi PortD, 1\n", 15);
+			strncat(asm_code->asm_main_code, "\tcbi PortD, 1\n", 15);
 
-						}else if(strncmp(s->value,"0", 1) == 0){
+		}else if(strncmp(value,"0", 1) == 0){
 
-							strncat(asm_code->asm_setup_code,"\tsbi DDRD, 0\n", 14);
-							strncat(asm_code->asm_main_code, "\tsbi PortD, 0\n", 15);
+			strncat(asm_code->asm_main_code, "\tcbi PortD, 0\n", 15);
 
-						}else{
+		}else{
 									
-							char *err_msg = calloc(1,sizeof(char));
+			char *err_msg = calloc(1,sizeof(char));
 
-							size_t err_msg_len = 31 + strlen(s->value);
+			size_t err_msg_len = 31 + strlen(value);
 
-							snprintf(err_msg, err_msg_len, "Pin %s not present in atmega328p\n", s->value);
+			snprintf(err_msg, err_msg_len, "Pin %s not present in atmega328p\n", value);
 
-							error *e = new_error(err_msg, t_ast->ast_node_index);
+			error *e = new_error(err_msg, t_ast->ast_node_index);
 
-							add_new_error(err_list,e);
+			add_new_error(err_list,e);
 
-						}
-							
-					}else{
-
-						size_t err_msg_len = 21 + strlen(first_arg->arg_name);
+		}
 								
-						char *err_msg = calloc(err_msg_len,sizeof(char));
+	}
+}
 
-						snprintf(err_msg, err_msg_len, "Symbol %s not declared\n", t_ast->args_list->first_arg->arg_name);
+//evaluate output function call
+void visitor_evaluate_output_function_call( ast *t_ast, error_list *err_list, code *asm_code, symbol_table *table){
 
-						error *e = new_error(err_msg, t_ast->ast_node_index);
+	function_args *first_arg = t_ast->args_list->first_arg;
+	function_args *second_arg = t_ast->args_list->last_arg;
 
-						add_new_error(err_list,e);
+	if( strncmp(first_arg->arg_type, "T_IDENTIFIER", 12) == 0 ){
 
-					}
+		symbol *s = search_symbol(table, first_arg->arg_name);
 
-				}else if(strncmp(second_arg->arg_name,"LOW", 3) == 0){
+		if( s != NULL ){
 
-					//implement LOW
+			output_function_code_gen(s->value, second_arg->arg_name, asm_code, err_list, t_ast);
 
-					s = search_symbol(table, first_arg->arg_name);
+		}else{
 
-					if(s != NULL){
-							
-						if(strncmp(s->value,"13", 2) == 0){
-
-							strncat(asm_code->asm_main_code, "\tcbi PortB, 5\n", 15);
-				
-						}else if(strncmp(s->value,"12", 2) == 0){
+			//variable not present error
+	
+			size_t err_msg_len = 21 + strlen(first_arg->arg_name);
 								
-							strncat(asm_code->asm_main_code, "\tcbi PortB, 4\n", 15);
+			char *err_msg = calloc(err_msg_len,sizeof(char));
 
-						}else if(strncmp(s->value,"11", 2) == 0){
+			snprintf(err_msg, err_msg_len, "Symbol %s not declared\n", t_ast->args_list->first_arg->arg_name);
 
-							strncat(asm_code->asm_main_code, "\tcbi PortB, 3\n", 15);
+			error *e = new_error(err_msg, t_ast->ast_node_index);
 
-						}else if(strncmp(s->value,"10", 2) == 0){
-								
-							strncat(asm_code->asm_main_code, "\tcbi PortB, 2\n", 15);
-								
-						}else if(strncmp(s->value,"9", 1) == 0){
+			add_new_error(err_list,e);
 
-							strncat(asm_code->asm_main_code, "\tcbi PortB, 1\n", 15);
+		}
 
-						}else if(strncmp(s->value,"8", 1) == 0){
+	}else if( strncmp(first_arg->arg_type,"T_CONSTANT", 10) == 0 ){
 
-							strncat(asm_code->asm_main_code, "\tcbi PortB, 0\n", 15);
+		output_function_code_gen(first_arg->arg_name, second_arg->arg_name, asm_code, err_list, t_ast);
 
-						}else if(strncmp(s->value,"7", 1) == 0){
+	}else if( strncmp(first_arg->arg_type, "T_KEYWORD", 9) == 0 ){
 
-							strncat(asm_code->asm_main_code, "\tcbi PortD, 7\n", 15);
+		if( strncmp(first_arg->arg_name,"serial", 6) == 0 ){
 
-						}else if(strncmp(s->value,"6", 1) == 0){
+			if( strncmp(second_arg->arg_type, "T_CONSTANT", 10) == 0 ||
+				strncmp(second_arg->arg_type, "T_STRING", 8) == 0 ){
 
-							strncat(asm_code->asm_main_code, "\tcbi PortD, 6\n", 15);
+				//implement for constant or string value
 
-						}else if(strncmp(s->value,"5", 1) == 0){
 
-							strncat(asm_code->asm_main_code, "\tcbi PortD, 5\n", 15);
+			}else if( strncmp(second_arg->arg_type, "T_IDENTIFIER", 12) == 0){
 
-						}else if(strncmp(s->value,"4", 1) == 0){
+				symbol *s = search_symbol(table, second_arg->arg_name);
 
-							strncat(asm_code->asm_main_code, "\tcbi PortD, 4\n", 15);
+				if(s != NULL){
 
-						}else if(strncmp(s->value,"3", 1) == 0){
-
-							strncat(asm_code->asm_main_code, "\tcbi PortD, 3\n", 15);
-
-						}else if(strncmp(s->value,"2", 1) == 0){
-
-							strncat(asm_code->asm_main_code, "\tcbi PortD, 2\n", 15);
-
-						}else if(strncmp(s->value,"1", 1) == 0){
-
-							strncat(asm_code->asm_main_code, "\tcbi PortD, 1\n", 15);
-
-						}else if(strncmp(s->value,"0", 1) == 0){
-
-							strncat(asm_code->asm_main_code, "\tcbi PortD, 0\n", 15);
-
-						}else{
-									
-							char *err_msg = calloc(1,sizeof(char));
-
-							size_t err_msg_len = 31 + strlen(s->value);
-
-							snprintf(err_msg, err_msg_len, "Pin %s not present in atmega328p\n", s->value);
-
-							error *e = new_error(err_msg, t_ast->ast_node_index);
-
-							add_new_error(err_list,e);
-
-						}
-							
-					}else{
-
-						size_t err_msg_len = 21 + strlen(first_arg->arg_name);
-
-						char *err_msg = calloc(err_msg_len,sizeof(char));
-
-						snprintf(err_msg, err_msg_len, "Symbol %s not declared\n", t_ast->args_list->first_arg->arg_name);
-
-						error *e = new_error(err_msg, t_ast->ast_node_index);
-
-						add_new_error(err_list,e);
-
-					}
-				}
-				
-			}else if(strncmp(first_arg->arg_type,"T_CONSTANT", 10) == 0){
-
-				//first argument CONSTANT
-					
-				char *s = first_arg->arg_name;
-
-				if(strncmp(second_arg->arg_name,"HIGH", 4) == 0){
-
-					if(strncmp(s,"13", 2) == 0){
-
-						strncat(asm_code->asm_setup_code,"\tsbi DDRB, 5\n", 14);
-						strncat(asm_code->asm_main_code, "\tsbi PortB, 5\n", 15);
-			
-					}else if(strncmp(s,"12", 2) == 0){
-								
-						strncat(asm_code->asm_setup_code,"\tsbi DDRB, 4\n", 14);
-						strncat(asm_code->asm_main_code, "\tsbi PortB, 4\n", 15);
-
-					}else if(strncmp(s,"11", 2) == 0){
-
-						strncat(asm_code->asm_setup_code,"\tsbi DDRB, 3\n", 14);
-						strncat(asm_code->asm_main_code, "\tsbi PortB, 3\n", 15);
-
-					}else if(strncmp(s,"10", 2) == 0){
-								
-						strncat(asm_code->asm_setup_code,"\tsbi DDRB, 2\n", 14);
-						strncat(asm_code->asm_main_code, "\tsbi PortB, 2\n", 15);
-								
-					}else if(strncmp(s,"9", 1) == 0){
-
-						strncat(asm_code->asm_setup_code,"\tsbi DDRB, 1\n", 14);
-						strncat(asm_code->asm_main_code, "\tsbi PortB, 1\n", 15);
-
-					}else if(strncmp(s,"8", 1) == 0){
-
-						strncat(asm_code->asm_setup_code,"\tsbi DDRB, 0\n", 14);
-						strncat(asm_code->asm_main_code, "\tsbi PortB, 0\n", 15);
-
-					}else if(strncmp(s,"7", 1) == 0){
-
-						strncat(asm_code->asm_setup_code,"\tsbi DDRD, 7\n", 14);
-						strncat(asm_code->asm_main_code, "\tsbi PortD, 7\n", 15);
-
-					}else if(strncmp(s,"6", 1) == 0){
-
-						strncat(asm_code->asm_setup_code,"\tsbi DDRD, 6\n", 14);
-						strncat(asm_code->asm_main_code, "\tsbi PortD, 6\n", 15);
-
-					}else if(strncmp(s,"5", 1) == 0){
-
-						strncat(asm_code->asm_setup_code,"\tsbi DDRD, 5\n", 14);
-						strncat(asm_code->asm_main_code, "\tsbi PortD, 5\n", 15);
-
-					}else if(strncmp(s,"4", 1) == 0){
-
-						strncat(asm_code->asm_setup_code,"\tsbi DDRD, 4\n", 14);
-						strncat(asm_code->asm_main_code, "\tsbi PortD, 4\n", 15);
-
-					}else if(strncmp(s,"3", 1) == 0){
-
-						strncat(asm_code->asm_setup_code,"\tsbi DDRD, 3\n", 14);
-						strncat(asm_code->asm_main_code, "\tsbi PortD, 3\n", 15);
-
-					}else if(strncmp(s,"2", 1) == 0){
-
-						strncat(asm_code->asm_setup_code,"\tsbi DDRD, 2\n", 14);
-						strncat(asm_code->asm_main_code, "\tsbi PortD, 2\n", 15);
-
-					}else if(strncmp(s,"1", 1) == 0){
-
-						strncat(asm_code->asm_setup_code,"\tsbi DDRD, 1\n", 14);
-						strncat(asm_code->asm_main_code, "\tsbi PortD, 1\n", 15);
-
-					}else if(strncmp(s,"0", 1) == 0){
-
-						strncat(asm_code->asm_setup_code,"\tsbi DDRD, 0\n", 14);
-						strncat(asm_code->asm_main_code, "\tsbi PortD, 0\n", 15);
-
-					}else{
-									
-						char *err_msg = calloc(1,sizeof(char));
-
-						size_t err_msg_len = 31 + strlen(s);
-
-						snprintf(err_msg, err_msg_len, "Pin %s not present in atmega328p\n", s);
-
-						error *e = new_error(err_msg, t_ast->ast_node_index);
-
-						add_new_error(err_list,e);
-
-					}
-							
-
-				}else if(strncmp(second_arg->arg_name,"LOW", 3) == 0){
-
-					//implement LOW
-					if(strncmp(s,"13", 2) == 0){
-
-						strncat(asm_code->asm_main_code, "\tcbi PortB, 5\n", 15);
-			
-					}else if(strncmp(s,"12", 2) == 0){
-								
-						strncat(asm_code->asm_main_code, "\tcbi PortB, 4\n", 15);
-
-					}else if(strncmp(s,"11", 2) == 0){
-
-						strncat(asm_code->asm_main_code, "\tcbi PortB, 3\n", 15);
-
-					}else if(strncmp(s,"10", 2) == 0){
-								
-						strncat(asm_code->asm_main_code, "\tcbi PortB, 2\n", 15);
-
-					}else if(strncmp(s,"9", 1) == 0){
-
-						strncat(asm_code->asm_main_code, "\tcbi PortB, 1\n", 15);
-
-					}else if(strncmp(s,"8", 1) == 0){
-
-						strncat(asm_code->asm_main_code, "\tcbi PortB, 0\n", 15);
-
-					}else if(strncmp(s,"7", 1) == 0){
-
-						strncat(asm_code->asm_main_code, "\tcbi PortD, 7\n", 15);
-
-					}else if(strncmp(s,"6", 1) == 0){
-
-						strncat(asm_code->asm_main_code, "\tcbi PortD, 6\n", 15);
-
-					}else if(strncmp(s,"5", 1) == 0){
-
-						strncat(asm_code->asm_main_code, "\tcbi PortD, 5\n", 15);
-
-					}else if(strncmp(s,"4", 1) == 0){
-
-						strncat(asm_code->asm_main_code, "\tcbi PortD, 4\n", 15);
-
-					}else if(strncmp(s,"3", 1) == 0){
-
-						strncat(asm_code->asm_main_code, "\tcbi PortD, 3\n", 15);
-
-					}else if(strncmp(s,"2", 1) == 0){
-
-						strncat(asm_code->asm_main_code, "\tcbi PortD, 2\n", 15);
-
-					}else if(strncmp(s,"1", 1) == 0){
-
-						strncat(asm_code->asm_main_code, "\tcbi PortD, 1\n", 15);
-
-					}else if(strncmp(s,"0", 1) == 0){
-
-						strncat(asm_code->asm_main_code, "\tcbi PortD, 0\n", 15);
-
-					}else{
-									
-						char *err_msg = calloc(1,sizeof(char));
-
-						size_t err_msg_len = 31 + strlen(s);
-
-						snprintf(err_msg, err_msg_len, "Pin %s not present in atmega328p\n", s);
-
-						error *e = new_error(err_msg, t_ast->ast_node_index);
-
-						add_new_error(err_list,e);
-
-					}
-								
-				}
-
-			}else if( strncmp(first_arg->arg_type, "T_KEYWORD", 9) == 0 ){
-
-				if( strncmp(first_arg->arg_name,"serial", 6) == 0 ){
-
-					if( strncmp(second_arg->arg_type, "T_CONSTANT", 10) == 0 ||
-						strncmp(second_arg->arg_type, "T_STRING", 8) == 0 ){
-
-						//implement for constant or string value
-
-
-					}else if( strncmp(second_arg->arg_type, "T_IDENTIFIER", 12) == 0){
-
-						symbol *s = search_symbol(table, second_arg->arg_name);
-
-						if(s != NULL){
-
-							//implement for identifier
-
-
-						}else{
-
-							//error
-
-
-						}
-
-
-					}
+					//implement for identifier
 
 
 				}else{
 
 					//error
 
+
 				}
+
 
 			}
 
-		}else if(strncmp(t_ast->function_name,"wait",4) == 0){
 
-			//wait
+		}else{
+
+			//error
+
+		}
+	}
+}
+
+//wait function call code generation
+void wait_function_code_gen(char *value, code *asm_code, error_list *err_list, ast *t_ast){
+
+
+	//wait
 			
-			if(delay_code_flag == 0){
-				char *reg = use_register(register_list);
+	if(delay_code_flag == 0){
+	
+		char *reg = use_register(register_list);
 
-				char *delay_counter = use_register(register_list);
+		char *delay_counter = use_register(register_list);
 
-				char *temp = use_register(register_list);
+		char *temp = use_register(register_list);
 
-				sprintf(asm_code->code_init,  ".def overflow_counter = %s\n"
-								 			  ".def delay_count = %s\n\n"
-											  ".def temp = %s\n"
-											  ".org 0x0000\n"
-											  "rjmp reset\n\n"
-											  ".org 0x0020\n"
-		        							  "rjmp overflow_handler\n", reg, delay_counter, temp);
+		sprintf(asm_code->code_init,  ".def overflow_counter = %s\n"
+						 			  ".def delay_count = %s\n\n"
+									  ".def temp = %s\n"
+									  ".org 0x0000\n"
+									  "rjmp reset\n\n"
+									  ".org 0x0020\n"
+        							  "rjmp overflow_handler\n", reg, delay_counter, temp);
 
-				asm_code->reset_code = "\n\nreset:\n" 
-							 "\tldi temp, 0b00000101\n"
-							 "\tout TCCR0B, temp				;prescaling to 1024\n"
-							 "\tldi temp, 0b00000001\n"
-							 "\tsts TIMSK0, temp				;enabling timer interrupt\n"
-							 "\tsei								;enabling global interrupt\n";
+		asm_code->reset_code = "\n\nreset:\n" 
+					 "\tldi temp, 0b00000101\n"
+					 "\tout TCCR0B, temp				;prescaling to 1024\n"
+					 "\tldi temp, 0b00000001\n"
+					 "\tsts TIMSK0, temp				;enabling timer interrupt\n"
+					 "\tsei								;enabling global interrupt\n";
 
-				asm_code->delay_function = calloc(200, sizeof(char));
+		asm_code->delay_function = calloc(200, sizeof(char));
 					
-				asm_code->delay_function = "\n\ndelay:\n"
-								 "\tclr overflow_counter\n"
-								 "\tsec_count:\n"
-								 "\t\tcp overflow_counter, delay_count\n"
-								 "\tbrne sec_count\n"
-								 "\tret\n";
+		asm_code->delay_function = "\n\ndelay:\n"
+						 "\tclr overflow_counter\n"
+						 "\tsec_count:\n"
+						 "\t\tcp overflow_counter, delay_count\n"
+						 "\tbrne sec_count\n"
+						 "\tret\n";
 						
 					//timer_overflow_handler = calloc(20, sizeof(char));
 
-				asm_code->timer_overflow_handler = "\n\noverflow_handler:\n"
+		asm_code->timer_overflow_handler = "\n\noverflow_handler:\n"
 									     "\tinc overflow_counter\n"
 										 "\tcpi overflow_counter, 61\n"
 										 "\tbrne PC+2\n"
 										 "\tclr overflow_counter\n"
 										 "\treti\n";
 
-				delay_code_flag = 1;
-			}
+		delay_code_flag = 1;
 
-			char *arg = (char*) t_ast->args_list->first_arg->arg_name;
+	}
 
-			if( isdigit(*arg) ){
+	if( isdigit(*value) ){
 
-				int delay_time = atoi(arg);
+		int delay_time = atoi(value);
 						
-				if(delay_time <= 1000){
+		if(delay_time <= 1000){
 							
-					int calc_delay = (delay_time * 60)/1000;
+			int calc_delay = (delay_time * 60)/1000;
 
-					char *temp_code = calloc(10, sizeof(char));
+			char *temp_code = calloc(10, sizeof(char));
 
-					sprintf(temp_code,"\tldi delay_count, %d\n", calc_delay);
-					strncat(asm_code->asm_main_code, temp_code, strlen(temp_code));
-					free(temp_code);
-					strncat(asm_code->asm_main_code,"\trcall delay\n",14);
+			sprintf(temp_code,"\tldi delay_count, %d\n", calc_delay);
+			strncat(asm_code->asm_main_code, temp_code, strlen(temp_code));
+			free(temp_code);
+			strncat(asm_code->asm_main_code,"\trcall delay\n",14);
 					
-				}else{
+		}else{
 
-					int calc_delay = (delay_time * 60)/1000;
+			int calc_delay = (delay_time * 60)/1000;
 							
-					int calc_delay_count =(int)calc_delay/60;
+			int calc_delay_count =(int)calc_delay/60;
 
-					strncat(asm_code->asm_main_code,"\tldi delay_count, 60\n", 22);
-					for(int i = 0;i < calc_delay_count;i++){	
-						strncat(asm_code->asm_main_code,"\trcall delay\n", 14);		
-					}
-
-				}
-			}else{
-					
-				s = search_symbol(table, arg);
-
-				if(s != NULL){
-
-					if( isdigit(*s->value)){
-
-						printf("%s\n", s->value);
-
-						int delay_time = atoi(s->value);
-						
-						printf("int -> %d \n", delay_time);
-
-						if(delay_time <= 1000){
-								
-							int calc_delay = (delay_time * 60)/1000;
-	
-							char *temp_code = calloc(10, sizeof(char));
-	
-							sprintf(temp_code,"\tldi delay_count, %d\n", calc_delay);
-							strncat(asm_code->asm_main_code, temp_code, strlen(temp_code));
-							free(temp_code);
-							strncat(asm_code->asm_main_code,"\trcall delay\n",14);
-							
-						}else{
-	
-							int calc_delay = (delay_time * 60)/1000;
-								
-							int calc_delay_count =(int)calc_delay/60;
-
-							strncat(asm_code->asm_main_code,"\tldi delay_count, 60\n", 22);
-							for(int i = 0;i < calc_delay_count;i++){	
-								strncat(asm_code->asm_main_code,"\trcall delay\n", 14);		
-							}
-
-						}
-
-					}else{
-
-						size_t err_msg_len = 29 + strlen(s->value);
-
-						char *err_msg = calloc(err_msg_len,sizeof(char));
-
-						snprintf(err_msg, err_msg_len, "%s is not valid wait parameter\n",arg);
-
-						error *e = new_error(err_msg, t_ast->ast_node_index);
-
-						add_new_error(err_list,e);
-
-					}
-				}else{
-
-					size_t err_msg_len = 21 + strlen(s->name);
-
-					char *err_msg = calloc(err_msg_len,sizeof(char));
-
-					snprintf(err_msg, err_msg_len, "Symbol %s not declared\n", s->name);
-
-					error *e = new_error(err_msg, t_ast->ast_node_index);
-
-					add_new_error(err_list,e);
-
-				}
-
+			strncat(asm_code->asm_main_code,"\tldi delay_count, 60\n", 22);
+			for(int i = 0;i < calc_delay_count;i++){	
+				strncat(asm_code->asm_main_code,"\trcall delay\n", 14);		
 			}
-				
+	
+		}
+
+	}else{
+
+		size_t err_msg_len = 29 + strlen(value);
+
+		char *err_msg = calloc(err_msg_len,sizeof(char));
+
+		snprintf(err_msg, err_msg_len, "%s is not valid wait parameter\n",value);
+
+		error *e = new_error(err_msg, t_ast->ast_node_index);
+
+		add_new_error(err_list,e);
+
+	}
+
+}
+
+//evaluate wait function call
+void visitor_evaluate_wait_function_call( ast *t_ast, error_list *err_list, code *asm_code, symbol_table *table){
+
+	function_args *first_arg = t_ast->args_list->first_arg;
+
+	if( strncmp(first_arg->arg_type, "T_CONSTANT", 10) == 0 ){
+
+		wait_function_code_gen(first_arg->arg_name, asm_code, err_list, t_ast);
+
+	}else if( strncmp(first_arg->arg_type, "T_IDENTIFIER", 12) == 0 ){
+
+		symbol *s = search_symbol(table, first_arg->arg_name);
+
+		if( s != NULL ){
+
+			wait_function_code_gen(s->value, asm_code, err_list, t_ast);
+
+		}else{
+		
+			size_t err_msg_len = 21 + strlen(s->name);
+
+			char *err_msg = calloc(err_msg_len,sizeof(char));
+
+			snprintf(err_msg, err_msg_len, "Symbol %s not declared\n", s->name);
+
+			error *e = new_error(err_msg, t_ast->ast_node_index);
+
+			add_new_error(err_list,e);
+	
+		}
+
+	}
+
+}
+
+//evaluate function calls
+void visitor_evaluate_function_call(ast *t_ast, error_list *err_list, code *asm_code, symbol_table *table){
+
+	if(is_builtin_function(t_ast->function_name) == 1){
+
+		if(strncmp(t_ast->function_name,"output",6) == 0){
+
+			visitor_evaluate_output_function_call(t_ast, err_list, asm_code, table);
+
+		}else if(strncmp(t_ast->function_name,"wait",4) == 0){
+
+			//wait
+
+			visitor_evaluate_wait_function_call(t_ast, err_list, asm_code, table);
+
 		}else if( strncmp(t_ast->function_name, "input", 6) == 0){
 
 			//input
@@ -883,6 +706,7 @@ void visitor_evaluate_function_call(ast *t_ast, error_list *err_list, code *asm_
 		}
 
 	}//user defined function call
+
 }
 
 //create new code structure

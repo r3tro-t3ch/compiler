@@ -37,6 +37,19 @@ void input_function_code_gen(char *reg,char *first_arg, code *asm_code, error_li
 //evaluate input function call
 void visitor_evaluate_input_funtion_call(char *reg, ast *t_ast, error_list *err_list, code *asm_code, symbol_table *table);
 
+//evaluate output function call
+void visitor_evaluate_output_function_call( ast *t_ast, error_list *err_list, code *asm_code, symbol_table *table);
+
+//output function call code generation
+void output_function_code_gen(char *value,char *second_arg, code *asm_code, error_list *err_list, ast *t_ast);
+
+//evaluate wait function call
+void visitor_evaluate_wait_function_call( ast *t_ast, error_list *err_list, code *asm_code, symbol_table *table);
+
+//wait function call code generation
+void wait_function_code_gen(char *value, code *asm_code, error_list *err_list, ast *t_ast);
+
+
 //evaluate function calls
 void visitor_evaluate_function_call(ast *t_ast, error_list *err_list, code *asm_code, symbol_table *table);
 

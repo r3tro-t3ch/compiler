@@ -8,9 +8,12 @@
 int main(int argc, char *argv[]){
 
 	lexer *l = new_lexer(
-		"var a\n"
-		"a = input(12)\n"
-		"var b = input(10)\n"
+		"var a = 10\n"
+		"output(a, HIGH)\n"
+		"output(11, HIGH)\n"
+		"wait(1000)\n"
+		"output(a, LOW)\n"
+		"output(11, LOW)\n"
 		"\0" );
 
 	parser *p = new_parser(l);
