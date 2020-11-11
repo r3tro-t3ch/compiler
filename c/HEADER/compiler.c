@@ -295,7 +295,7 @@ token* get_next_token(parser *p){
 			 }
 		case '=':{
 
-				char next = p->l->code[p->l->index+1];
+				/*char next = p->l->code[p->l->index+1];
 
 				if( next == '=' ){
 
@@ -306,13 +306,13 @@ token* get_next_token(parser *p){
 					return t;
 
 				}else{
-
+*/
 					t = new_token("T_EQUAL", char_to_str(p->l->current_char));
 					p->current_token = t;
 					next_char(p->l);
 					return t;
 
-				}
+//				}
 
 				break;
 			 }
@@ -504,7 +504,7 @@ token* peek_next_token(parser *p){
 				break;
 			 }
 		case '=':{
-				
+/*				
 				char next = p->l->code[p->l->index+1];
 				
 				if( next == '=' ){
@@ -515,12 +515,12 @@ token* peek_next_token(parser *p){
 					return t;
 
 				}else{
-
+*/
 					t = new_token("T_EQUAL", char_to_str(p->l->current_char));
 					next_char(temp_p->l);
 					return t;
 
-				}
+				//}
 
 				break;
 			 }
@@ -616,6 +616,11 @@ ast* new_ast(char *type){
 	_ast->var_type = (void *) 0;
 	_ast->var_return_val = (void *) 0;
 	_ast->var_expr = (void *) 0;
+
+	//conditional statements
+	_ast->conditional_statement_expr = (void *) 0;
+	_ast->true_block = (void *)0;
+	_ast->false_block = (void *) 0;
 
 	return _ast;
 

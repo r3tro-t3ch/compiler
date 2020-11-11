@@ -97,6 +97,15 @@ typedef struct AST{
 	char *var_return_val;
 	token_list *var_expr;
 
+	//conditional statements
+	token_list *conditional_statement_expr;
+	struct AST_LIST *true_block;
+	struct AST_LIST *false_block;
+
+	//looping statements
+	token_list *loop_condition_expr;
+	struct AST_LIST *loop_block;
+
 } ast;
 
 //creates new ast

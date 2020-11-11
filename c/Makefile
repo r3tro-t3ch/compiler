@@ -11,7 +11,7 @@ HEX_CODE:=code.hex
 
 build:
 	gcc ${HEADER_CODE} ${MAIN} ${CFLAGS}-o ${TARGET}
-	
+
 clean:
 	rm ${TARGET}
 

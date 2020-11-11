@@ -29,16 +29,13 @@ reset:
 
 setup:
 	sbi DDRB, 2
-	sbi DDRB, 3
 
 
 main:
 	sbi PortB, 2
-	sbi PortB, 3
 	ldi delay_count, 60
 	rcall delay
 	cbi PortB, 2
-	cbi PortB, 3
 
 
 end:
