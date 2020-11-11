@@ -977,9 +977,11 @@ void visitor_evaluate(ast_l *ast_list, error_list* err_list){
 		exit(0);
 	}else{
 
+		//printing symbol table for drbugging process only
+		fprintf(stdout, "\n SYMBOL TABLE \n");
 		print_symbol_table(table);
 
-		FILE *f = fopen("code.asm","w+");
+		FILE *f = fopen("./output/code.asm","w+");
 
 		fprintf(f,";**************************************************\n"
 				  ";*                                                *\n"
@@ -1006,8 +1008,6 @@ void visitor_evaluate(ast_l *ast_list, error_list* err_list){
 		fprintf(f,"\nsetup:\n");
 
 		fprintf(f,"%s", asm_code->asm_setup_code);
-
-		fprintf(stdout,"%s", asm_code->asm_setup_code);
 
 		fprintf(f,"\n\n");
 

@@ -35,6 +35,10 @@ symbol* new_var_symbol(char *var_name, char *value, char *data_type){
 
 		var->data_type = "DSEG_VAR";
 
+	}else if( strncmp(data_type, "NA", 8) == 0){
+
+		var->data_type = "NA";
+
 	}else{
 
 		var->data_type = "NUMBER";

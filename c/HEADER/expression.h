@@ -12,6 +12,9 @@ int is_expression_token(token *t);
 //check if is operand
 int is_operator(token *t);
 
+//check if operator is a logical operator
+int is_logical_operator(token *t);
+
 typedef struct TOKEN_LIST{
 
 	token *first_token;
@@ -20,25 +23,6 @@ typedef struct TOKEN_LIST{
 
 } token_list;
 
-typedef struct EXPRESSION_NODE{
-
-	char *type;
-	char *content;
-
-	struct EXPRESSION_NODE *left_node;
-	struct EXPRESSION_NODE *right_node;
-
-	struct EXPRESSION_NODE *prev_node;
-	struct EXPRESSION_NODE *next_node;
-
-} expression_node;
-
-typedef struct EXPRESSION_AST{
-
-	expression_node *root_node;
-
-} expr_ast;
-
 typedef struct STACK{
 
 	token *top;
@@ -46,34 +30,17 @@ typedef struct STACK{
 
 } stack;
 
-typedef struct EXPR_STACK{
-
-	expression_node *top;
-	size_t stack_size;
-
-} expr_stack;
-
-
 //new token list
 token_list* new_token_list();
 
 //add new token
 void add_new_token (token_list *list, token *t);
 
-//new expression node
-expression_node* new_expression_node(token *t);
-
-//new expression ast
-expr_ast* new_expression_ast();
-
 //reverse token list
 void reverse_token_list(token_list *list);
 
 //create a stack
 stack* new_stack();
-
-//create a stack
-expr_stack* new_expr_stack();
 
 //get top value of stack
 token* get_stack_top(stack *s);
@@ -83,15 +50,6 @@ token* pop(stack *s);
 
 //stack push operation
 void push(stack *s, token *t);
-
-//expression stack pop operation
-expression_node* pop_expr(expr_stack *s);
-
-//expression stack push operation
-void push_expr(expr_stack *s, expression_node *t);
-
-//printing expression tree in inorder
-void print_expression_ast(expression_node *root_node);
 
 //check if a string is present in in given expression
 int string_present(token *list, symbol_table *table);
@@ -106,10 +64,7 @@ char* evaluate_expression_ast(token_list *node, error_list *err_list, symbol_tab
 int check_precedence(token *t);
 
 //infix to prefix
-token_list* infix_to_prefix(token_list *list);
-
-//create expression ast
-expr_ast* create_new_expression_ast(token_list *list);
+token_list* infix_to_postfix(token_list *list);
 
 //check if postfix expression is valid or not
 int is_postfix_valid(token_list* list);

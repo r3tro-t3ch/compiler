@@ -22,29 +22,12 @@ int main(int argc, char *argv[]){
 			code_len = ftell(file);
 			fseek(file, 0, SEEK_SET);
 
-
 			code = calloc(code_len, sizeof(char) + 1);
-/*
-			fread(code, sizeof(char), code_len, file);
-
-			code[code_len] = '\0';
-	
-			fclose(file);
-
-		*/
-			
+		
 			i = 0;
 			char c;
 
 			while((c = fgetc(file)) != EOF){
-
-				if(c == '\n'){
-
-					code [i] = '\n';
-					i++;
-					continue;
-
-				}
 
 				code[i] = (char)c;
 				i++;
@@ -60,8 +43,6 @@ int main(int argc, char *argv[]){
 
 		}
 
-		printf("%s \n", code);
-		printf("code size -> %d\n", i);
 		lexer *l = new_lexer(code);
 
 		parser *p = new_parser(l);
@@ -81,6 +62,9 @@ int main(int argc, char *argv[]){
 			//print_symbol_table(table);
 
 		}
+
+		//free the code memory after all the compilation is done
+		free(code);
 
 	}else{
 

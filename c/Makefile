@@ -13,6 +13,7 @@ build:
 	gcc ${HEADER_CODE} ${MAIN} ${CFLAGS}-o ${TARGET}
 
 clean:
+	rm ./output/code.*
 	rm ${TARGET}
 
 debug:
@@ -20,7 +21,7 @@ debug:
 
 
 upload:
-	avra $(ASSEMBLY_CODE)
+	avra ./output/$(ASSEMBLY_CODE)
 	avrdude -p m328p -c stk500v1 -b $(BAUDRATE) -P $(PORT) -U flash:w:$(HEX_CODE) -F
 
 

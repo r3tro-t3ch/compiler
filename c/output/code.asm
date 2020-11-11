@@ -9,6 +9,9 @@
 .include "./m328Pdef.inc"
 
 
+.DSEG
+	n: .BYTE 1
+.CSEG
 .def overflow_counter = r16
 .def delay_count = r17
 
@@ -28,10 +31,15 @@ reset:
 	sei								;enabling global interrupt
 
 setup:
+	cbi DDRB, 3
 	sbi DDRB, 2
 
 
 main:
+	nop
+	in r16, 8
+	andi r16, 8
+	sts n, r16
 	sbi PortB, 2
 	ldi delay_count, 60
 	rcall delay

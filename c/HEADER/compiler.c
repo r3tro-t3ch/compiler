@@ -295,7 +295,7 @@ token* get_next_token(parser *p){
 			 }
 		case '=':{
 
-				/*char next = p->l->code[p->l->index+1];
+				char next = p->l->code[p->l->index+1];
 
 				if( next == '=' ){
 
@@ -305,14 +305,12 @@ token* get_next_token(parser *p){
 					next_char(p->l);
 					return t;
 
-				}else{
-*/
-					t = new_token("T_EQUAL", char_to_str(p->l->current_char));
-					p->current_token = t;
-					next_char(p->l);
-					return t;
+				}
 
-//				}
+				t = new_token("T_EQUAL", char_to_str(p->l->current_char));
+				p->current_token = t;
+				next_char(p->l);
+				return t;
 
 				break;
 			 }
@@ -322,22 +320,19 @@ token* get_next_token(parser *p){
 
 				if( next == '=' ){
 
-					printf("here\n");
 					t = new_token("T_GE", ">=");
 					p->current_token = t;
 					next_char(p->l);
 					next_char(p->l);
 					return t;
 
-				}else{
-
-					t = new_token("T_GREATER", char_to_str(p->l->current_char));
-					p->current_token = t;
-					next_char(p->l);
-					return t;
-
 				}
-				
+
+				t = new_token("T_GREATER", char_to_str(p->l->current_char));
+				p->current_token = t;
+				next_char(p->l);
+				return t;
+
 				break;
 				
 			}
@@ -353,17 +348,79 @@ token* get_next_token(parser *p){
 					next_char(p->l);
 					return t;
 
-				}else{
+				}
 
-					t = new_token("T_LESSER", char_to_str(p->l->current_char));
+				t = new_token("T_LESSER", char_to_str(p->l->current_char));
+				p->current_token = t;
+				next_char(p->l);
+				return t;
+
+				break;
+			 }
+		case '|':{
+
+				char next = p->l->code[p->l->index+1];
+
+				if( next == '|' ){
+
+					t = new_token("T_LOR", "||");
 					p->current_token = t;
+					next_char(p->l);
 					next_char(p->l);
 					return t;
 
 				}
 
+				t = new_token("T_BOR", char_to_str(p->l->current_char));
+				p->current_token = t;
+				next_char(p->l);
+				return t;
+
 				break;
+
+				 }
+		case '&':{
+
+				char next = p->l->code[p->l->index+1];
+
+				if( next == '&' ){
+
+					t = new_token("T_LAND", "&&");
+					p->current_token = t;
+					next_char(p->l);
+					next_char(p->l);
+					return t;
+
+				}
+
+				t = new_token("T_BAND", char_to_str(p->l->current_char));
+				p->current_token = t;
+				next_char(p->l);
+				return t;
+
+				break;
+
 			 }
+		case '!':{
+
+				char next = p->l->code[p->l->index+1];
+
+				if( next == '=' ){
+
+					t = new_token("T_NE", "!=");
+					p->current_token = t;
+					next_char(p->l);
+					next_char(p->l);
+					return t;
+
+				}
+
+				t = new_token("T_BNOT", char_to_str(p->l->current_char));
+				p->current_token = t;	
+				next_char(p->l);
+				return t;
+
+			}
 		case ',':{
 				t = new_token("T_COMMA", char_to_str(p->l->current_char));
 				p->current_token = t;
@@ -504,8 +561,8 @@ token* peek_next_token(parser *p){
 				break;
 			 }
 		case '=':{
-/*				
-				char next = p->l->code[p->l->index+1];
+				
+				char next = temp_p->l->code[temp_p->l->index+1];
 				
 				if( next == '=' ){
 
@@ -514,19 +571,17 @@ token* peek_next_token(parser *p){
 					next_char(temp_p->l);
 					return t;
 
-				}else{
-*/
-					t = new_token("T_EQUAL", char_to_str(p->l->current_char));
-					next_char(temp_p->l);
-					return t;
+				}
 
-				//}
+				t = new_token("T_EQUAL", char_to_str(p->l->current_char));
+				next_char(temp_p->l);
+				return t;
 
 				break;
 			 }
 		case '>':{
 					
-				char next = p->l->code[p->l->index+1];
+				char next = temp_p->l->code[temp_p->l->index+1];
 				
 				if( next == '=' ){
 
@@ -535,18 +590,17 @@ token* peek_next_token(parser *p){
 					next_char(temp_p->l);
 					return t;
 
-				}else{
-
-					t = new_token("T_GREATER", char_to_str(p->l->current_char));
-					next_char(temp_p->l);
-					return t;
-				
 				}
+
+				t = new_token("T_GREATER", char_to_str(p->l->current_char));
+				next_char(temp_p->l);
+				return t;
+				
 				break;
 			 }
 		case '<':{
 					
-				char next = p->l->code[p->l->index+1];
+				char next = temp_p->l->code[temp_p->l->index+1];
 				
 				if( next == '=' ){
 
@@ -555,14 +609,73 @@ token* peek_next_token(parser *p){
 					next_char(temp_p->l);
 					return t;
 
-				}else{
-
-					t = new_token("T_LESSER", char_to_str(p->l->current_char));
-					next_char(temp_p->l);
-					return t;
 				}
+
+				t = new_token("T_LESSER", char_to_str(p->l->current_char));
+				next_char(temp_p->l);
+				return t;
+				
 				break;
 			 }
+		case '|':{
+
+				char next = temp_p->l->code[temp_p->l->index+1];
+
+				if( next == '|' ){
+
+					t = new_token("T_LOR", "||");
+					next_char(temp_p->l);
+					next_char(temp_p->l);
+					return t;
+
+				}
+
+				t = new_token("T_BOR", char_to_str(p->l->current_char));
+				next_char(temp_p->l);
+				return t;
+
+				break;
+
+			}
+		case '&':{
+
+				char next = temp_p->l->code[temp_p->l->index+1];
+
+				if( next == '&' ){
+
+					t = new_token("T_LAND", "&&");
+					next_char(temp_p->l);
+					next_char(temp_p->l);
+					return t;
+
+				}
+
+				t = new_token("T_BAND", char_to_str(p->l->current_char));
+				next_char(temp_p->l);
+				return t;
+
+				break;
+
+			}
+		case '!':{
+
+				char next = temp_p->l->code[temp_p->l->index+1];
+
+				if( next == '=' ){
+
+					t = new_token("T_NE", "!=");
+					next_char(temp_p->l);
+					next_char(temp_p->l);
+					return t;
+
+				}
+
+				t = new_token("T_BNOT", char_to_str(temp_p->l->current_char));
+				
+				next_char(temp_p->l);
+				return t;
+
+			}
 		case ',':{
 				t = new_token("T_COMMA", char_to_str(p->l->current_char));
 				next_char(temp_p->l);
@@ -739,7 +852,7 @@ int parser_eat(token *t, char *type, error_list *err_list, size_t code_size){
 }
 
 //parse expressions
-token_list* parse_expressions(parser *p /*, error_list *err_list,*/){
+token_list* parse_expressions(parser *p ){
 
 	token_list *list = new_token_list();
 
@@ -759,74 +872,9 @@ token_list* parse_expressions(parser *p /*, error_list *err_list,*/){
 
 	}
 
-	reverse_token_list(list);
+	token_list *postfix = infix_to_postfix(list);
 
-	token *temp = new_token("T_LPAREN", "(");
-
-	temp->next_token = list->first_token;
-	list->first_token->prev_token = temp;
-	list->first_token = temp;
-
-	temp = new_token("T_RPAREN", ")");
-
-	list->last_token->next_token = temp;
-	temp->prev_token = list->last_token;
-	list->last_token = temp;
-
-	token *t = list->first_token;
-
-	token_list *postfix_expression = new_token_list();
-
-	stack *STACK = new_stack();
-
-	//infix to prefix
-
-	while( t != NULL ){
-
-		if( strncmp(t->type,"T_CONSTANT",11) == 0 ||
-			strncmp(t->type,"T_IDENTIFIER", 12) == 0 ||
-			strncmp(t->type,"T_STRING", 8) == 0){
-
-			add_new_token(postfix_expression, new_token(t->type, t->content));
-
-		}else if( strncmp(t->type,"T_LPAREN", 8) == 0 ){
-
-			push(STACK, t);		
-
-		}else if( strncmp(t->type,"T_RPAREN", 8) == 0 ){
-
-			while( strncmp( get_stack_top(STACK)->type,"T_LPAREN",8) != 0){
-
-				add_new_token(postfix_expression, new_token(get_stack_top(STACK)->type, get_stack_top(STACK)->content));
-				pop(STACK);
-
-			}
-
-			pop(STACK);
-
-		}
-
-		else{
-			if( is_operator(t) == 1 ){
-
-				while(check_precedence(t) <= check_precedence(get_stack_top(STACK))){
-
-					add_new_token(postfix_expression, get_stack_top(STACK));
-					pop(STACK);
-
-				}
-
-				push(STACK, t);
-
-			}
-		}
-
-		t = t->next_token;
-	}
-		
-	free(STACK);
-
-	return postfix_expression;
+	return postfix;
 
 }
 
