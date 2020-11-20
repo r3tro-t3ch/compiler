@@ -1,7 +1,12 @@
-var a = 10
-var b = 11
-var n = input(b)
-var c
-output(a, HIGH)
-wait(1000)
-output(a, LOW)
+var pin = 13
+var time = 1000
+
+output(pin, HIGH)
+wait(time)
+output(pin, LOW)
+wait(time)
+
+time = 2000
+output(pin, HIGH)
+wait(time)
+output(pin, LOW)

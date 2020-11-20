@@ -3,7 +3,7 @@
 #include <string.h>
 #include <stdio.h>
 #include "symbol_table.h"
-#include <ctype.h>
+
 
 int is_expression_token(token *t){
 
@@ -647,11 +647,8 @@ token_list* postfix_to_infix(token_list *list){
 			infix_expr = calloc(list->token_count, sizeof(char));
 
 			strncat(infix_expr, left->content, strlen(left->content));
-			strncat(infix_expr, " ", 2);
 			strncat(infix_expr, t->content, strlen(t->content));
-			strncat(infix_expr, " ", 2);
 			strncat(infix_expr, right->content, strlen(right->content));
-			strncat(infix_expr, " ", 2);
 
 			token *temp = new_token("T_EXPR", infix_expr);
 
@@ -673,7 +670,7 @@ token_list* postfix_to_infix(token_list *list){
 
 
 	printf("\n");
-	return str_to_token_list(infix_expr);
+	return infix;
 
 }
 
@@ -726,13 +723,6 @@ int is_postfix_valid(token_list* list){
 	
 }
 
-//get identifer from string list
-//char* get_identifier_from_string(char *expr,){
-
-
-
-//}
-
 //convert string to token list
 token_list* str_to_token_list(char *expr){
 
@@ -740,34 +730,14 @@ token_list* str_to_token_list(char *expr){
 
 	for(size_t i = 0; i < strlen(expr); i++){
 
-		if( isalnum(expr[i]) ){
-	
-			char *identifier = calloc(1,sizeof(char));
-	
-			int j = 0;
-
-			while( isalnum(expr[i]) ){
-
-				identifier = realloc(identifier, j + sizeof(char));
-        		identifier[j] = expr[i];
-        		j++;
-      			i++;
-
-			}
-
-			if( isdigit(*identifier)){
+		if( isdigit(*expr[i]) ){
 			
-				add_new_token(list, new_token("T_CONSTANT", identifier));
+			add_new_token(list, new_token("T_CONSTANT", identifier));
 			
-			}else{
+		}else{
 
-				add_new_token(list, new_token("T_IDENTIFIER", identifier));
+			add_new_token(list, new_token("T_IDENTIFIER", identifier));
 
-			}
-		}
-
-		if(expr[i] == ' '){
-			continue;
 		}
 
 		if(expr[i] == '+'){
@@ -791,6 +761,7 @@ token_list* str_to_token_list(char *expr){
 	}
 
 	return list;
+
 
 }
 

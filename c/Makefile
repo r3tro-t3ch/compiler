@@ -19,9 +19,9 @@ clean:
 debug:
 	valgrind ${DFLAGS} ./${TARGET}
 
-
 upload:
-	avra ./output/$(ASSEMBLY_CODE)
+	avra $(ASSEMBLY_CODE)
 	avrdude -p m328p -c stk500v1 -b $(BAUDRATE) -P $(PORT) -U flash:w:$(HEX_CODE) -F
 
-
+run:
+	avra $(ASSEMBLY_CODE)
