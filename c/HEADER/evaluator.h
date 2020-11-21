@@ -49,7 +49,6 @@ void visitor_evaluate_wait_function_call( ast *t_ast, error_list *err_list, code
 //wait function call code generation
 void wait_function_code_gen(char *value, code *asm_code, error_list *err_list, ast *t_ast);
 
-
 //evaluate function calls
 void visitor_evaluate_function_call(ast *t_ast, error_list *err_list, code *asm_code, symbol_table *table);
 

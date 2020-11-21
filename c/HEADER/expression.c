@@ -14,7 +14,18 @@ int is_expression_token(token *t){
 		strncmp(t->type, "T_ASTERIX", 9) == 0 ||
 		strncmp(t->type, "T_FSLASH", 8) == 0 ||
 		strncmp(t->type, "T_MOD", 5) == 0 ||
-		strncmp(t->type, "T_STRING", 8) == 0
+		strncmp(t->type, "T_STRING", 8) == 0 
+		/*strncmp(t->type, "T_EE", 4) == 0 ||
+		strncmp(t->type, "T_NE", 4) == 0 ||
+		strncmp(t->type, "T_GE", 4) == 0 ||
+		strncmp(t->type, "T_LE", 4) == 0 ||
+		strncmp(t->type, "T_GREATER", 9) == 0 ||
+		strncmp(t->type, "T_LESSER", 8 ) == 0 ||
+		strncmp(t->type, "T_LOR", 5) == 0 ||
+		strncmp(t->type, "T_LAND", 6) == 0 ||
+		strncmp(t->type, "T_BOR", 5) == 0 ||
+		strncmp(t->type, "T_BAND", 6) == 0 ||
+		strncmp(t->type, "T_BNOT", 6) == 0 */
 	  ){
 
 		return 1;
@@ -158,12 +169,16 @@ void push(stack *s, token *t){
 //check if a string is present in in given expression
 int string_present(token *list, symbol_table *table){
 
+	//print_symbol_table(table);
+
 	int flag = 0;
 
 	token *t = list;
 
 	while(t != NULL){
-		
+	
+//		printf("token -> %s \n", t->content);
+
 		if( strncmp( t->type, "T_STRING", 8 ) == 0){
 
 			flag = 1;
@@ -213,6 +228,48 @@ int is_valid_string_expr(token *list){
 	}
 
 	return flag;
+
+}
+
+//check for undeclared var in expr
+int is_undeclared_var_present(token_list *list, symbol_table *table, error_list *err_list, int ast_node_index){
+
+	int FLAG = 0;
+
+	symbol *s;
+
+	token *t = list->first_token;
+
+	while(t != NULL){
+
+		if( strncmp(t->type, "T_IDENTIFIER", 12) == 0 ){
+
+			s = search_symbol(table, t->content);
+
+			if( s == NULL ){
+
+				FLAG = 1;
+			
+				size_t err_msg_len = strlen(t->content) + ERR_MSG_VAR_NOT_PRESENT_LEN;
+
+				char *err_msg = calloc(err_msg_len, sizeof(char));
+
+				snprintf(err_msg, err_msg_len,
+						 "variable %s is not declared\n",
+						 t->content);
+
+				add_new_error(err_list, new_error(err_msg, ast_node_index));
+
+
+				break;
+			}
+
+		}
+		t = t->next_token;
+
+	}
+
+	return FLAG;
 
 }
 
@@ -591,8 +648,6 @@ token_list* postfix_to_infix(token_list *list){
 
 	char *infix_expr;
 
-	token_list *infix = new_token_list();
-
 	token *t = list->first_token;
 
 	stack *s = new_stack();
@@ -665,14 +720,9 @@ token_list* postfix_to_infix(token_list *list){
 
 	}
 
+	//printf("%s ", infix_expr);
 
-	infix = new_token_list();
-
-
-	printf("%s ", infix_expr);
-
-
-	printf("\n");
+	//printf("\n");
 	return str_to_token_list(infix_expr);
 
 }

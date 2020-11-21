@@ -156,8 +156,11 @@ int parser_eat(token *t, char *type, error_list *err_list, size_t code_size);
 
 //parse given statements
 
-//parse expressions
+//parse arithmetic expressions
 token_list* parse_expressions(parser *p/* error_list *err_list,*/);
+
+//parse conditional expression
+token_list* parse_conditional_expressions(parser *p);
 
 //parse variable declaration and definition
 ast* parse_var_def(parser *p,error_list *err_list,  ast_l *ast_list);
@@ -170,6 +173,9 @@ ast* parse_var_assignment(parser *p,error_list *err_list,  ast_l *ast_list);
 
 //parse function call
 ast* parse_function_call(parser *p,error_list *err_list,  ast_l *ast_list);
+
+//parse conditional statements
+ast *parse_conditional_statements(parser *p,error_list *err_list,  ast_l *ast_list);
 
 //parse statements
 ast_l* parse_statements(parser *p, error_list *err_list);

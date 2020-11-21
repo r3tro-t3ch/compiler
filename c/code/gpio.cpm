@@ -1,12 +1,30 @@
-var pin = 13
+var red1 = 12
+var yellow = 10
+var red2 = 9
 var time = 1000
 
-output(pin, HIGH)
+output(red1, HIGH)
+output(yellow, HIGH)
+output(red2, HIGH)
 wait(time)
-output(pin, LOW)
+output(red1, LOW)
+output(yellow, LOW)
+output(red2, LOW)
+wait(time)
+output(red1, HIGH)
+output(yellow, HIGH)
+output(red2, HIGH)
+wait(time)
+output(red1, LOW)
+output(yellow, LOW)
+output(red2, LOW)
+wait(time)
+output(red1, HIGH)
+output(yellow, HIGH)
+output(red2, HIGH)
+wait(time)
+output(red1, LOW)
+output(yellow, LOW)
+output(red2, LOW)
 wait(time)
 
-time = 2000
-output(pin, HIGH)
-wait(time)
-output(pin, LOW)

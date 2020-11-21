@@ -752,6 +752,7 @@ void visitor_evaluate(ast_l *ast_list, error_list* err_list){
 
 		if( strncmp(t_ast->type, "AST_VAR_DEF_ASSIGNMENT_FUNCTION", 31) == 0){
 
+
 			temp_s = search_symbol(table, t_ast->var_def_var_name);
 
 			if(temp_s == NULL){
@@ -810,79 +811,73 @@ void visitor_evaluate(ast_l *ast_list, error_list* err_list){
 					
 					//check for undeclared variables
 					
-					if( is_undeclared_var_present(list, table, err_list, t_ast->ast_node_index) == 0 ){
+					if( is_undeclared_var_present(list, table, err_list) == 1 )	
 
-	//					print_token_list(list);
 
-						token_list* infix = postfix_to_infix(list);
+//					print_token_list(list);
 
-						token *t = infix->first_token;
+					token_list* infix = postfix_to_infix(list);
 
-						/****************************/
-						/*raise string present error*/
-						/****************************/
+					token *t = infix->first_token;
 
-						strncat(temp_expr, "(", 2);
+					/****************************/
+					/*raise string present error*/
+					/****************************/
 
-						while(t != NULL){
+					strncat(temp_expr, "(", 2);
 
-							if(strncmp(t->type, "T_IDENTIFIER", 12) == 0){
+					while(t != NULL){
 
-								strncat(temp_expr,"$",2 );
+						if(strncmp(t->type, "T_IDENTIFIER", 12) == 0){
 
-							}
-
-							strncat(temp_expr, t->content, strlen(t->content));
-
-							t = t->next_token;
+							strncat(temp_expr,"$",2 );
 
 						}
 
-						strncat(temp_expr, ")", 2);
+						strncat(temp_expr, t->content, strlen(t->content));
 
-						char *temp_reg = use_register(register_list);
+						t = t->next_token;
 
-						char *temp_code = calloc(100, sizeof(char));
-					
-						//declaring variable in asm
-						sprintf(temp_code,
-								"\t%s: .BYTE 1\n",
-								t_ast->var_def_var_name);
-
-						strncat(asm_code->DSEG, temp_code, strlen(temp_code));
-
-						asm_code->DSEG_FLAG = 1;
-
-						//defining variable
-						free(temp_code);
-
-						temp_code = calloc(100, sizeof(char));
-
-						sprintf(temp_code, 
-								"\tldi %s, %s\n"
-								"\tsts %s, %s\n",
-								temp_reg, temp_expr, t_ast->var_def_var_name, temp_reg);
-
-						strncat(asm_code->asm_main_code, temp_code, strlen(temp_code));
-
-						//updating symbol table
-						symbol *s = new_var_symbol( t_ast->var_def_var_name,
-													t_ast->var_def_var_name,
-													"DSEG_VAR");
-
-						add_new_symbol(table, s);
-	
-						free(temp_expr);
-						free(temp_code);
-
-					
 					}
 
-				}else{
+					strncat(temp_expr, ")", 2);
 
-//					printf("******************TOKEN LIST*******************\n");
-//					print_token_list(list);
-//					printf("\n");
+					char *temp_reg = use_register(register_list);
+
+					char *temp_code = calloc(100, sizeof(char));
+					
+					//declaring variable in asm
+					sprintf(temp_code,
+							"\t%s: .BYTE 1\n",
+							t_ast->var_def_var_name);
+
+					strncat(asm_code->DSEG, temp_code, strlen(temp_code));
+
+					asm_code->DSEG_FLAG = 1;
+
+					//defining variable
+					free(temp_code);
+
+					temp_code = calloc(100, sizeof(char));
+
+					sprintf(temp_code, 
+							"\tldi %s, %s\n"
+							"\tsts %s, %s\n",
+							temp_reg, temp_expr, t_ast->var_def_var_name, temp_reg);
+
+					strncat(asm_code->asm_main_code, temp_code, strlen(temp_code));
+
+					//updating symbol table
+					symbol *s = new_var_symbol( t_ast->var_def_var_name,
+												t_ast->var_def_var_name,
+												"DSEG_VAR");
+
+					add_new_symbol(table, s);
+
+					free(temp_expr);
+					free(temp_code);
+
+				}else{
 
 					char* answer = evaluate_expression_ast(list, err_list, table, t_ast->ast_node_index, STRING_FLAG);
 
@@ -1053,67 +1048,65 @@ void visitor_evaluate(ast_l *ast_list, error_list* err_list){
 					/*     ADD VARIABLE NOT PRESENT ERROR	  */
 					/******************************************/
 
-					if( is_undeclared_var_present(list, table, err_list, t_ast->ast_node_index) == 0 ){
-		
-						char *temp_expr = calloc(100, sizeof(char));
+					char *temp_expr = calloc(100, sizeof(char));
 
-	//					print_token_list(list);
+					print_token_list(list);
 
-						token_list* infix = postfix_to_infix(list);
-						token *t = infix->first_token;
+					token_list* infix = postfix_to_infix(list);
+					token *t = infix->first_token;
 
-						/****************************/
-						/*raise string present error*/
-						/****************************/
+					/****************************/
+					/*raise string present error*/
+					/****************************/
 
-						strncat(temp_expr, "(", 2);
+					strncat(temp_expr, "(", 2);
 
-						while(t != NULL){
+					while(t != NULL){
 
-							if(strncmp(t->type, "T_IDENTIFIER", 12) == 0){
+						if(strncmp(t->type, "T_IDENTIFIER", 12) == 0){
 
-								strncat(temp_expr,"$",2 );
-
-							}
-						
-							strncat(temp_expr, t->content, strlen(t->content));
-
-							t = t->next_token;
+							strncat(temp_expr,"$",2 );
 
 						}
+						
+						strncat(temp_expr, t->content, strlen(t->content));
 
-						strncat(temp_expr, ")", 2);
-
-						char *temp_reg = use_register(register_list);
-
-						char *temp_code = calloc(100, sizeof(char));
-					
-						//defining variable
-						free(temp_code);
-
-						temp_code = calloc(100, sizeof(char));
-
-						sprintf(temp_code, 
-								"\tldi %s, %s\n"
-								"\tsts %s, %s\n",
-								temp_reg, temp_expr, t_ast->var_name, temp_reg);
-
-						//reuse register for other operations
-						register_index--;
-
-						strncat(asm_code->asm_main_code, temp_code, strlen(temp_code));
-
-						//updating symbol table
-						symbol *s = new_var_symbol( t_ast->var_name,
-													t_ast->var_name,
-													"DSEG_VAR");
-	
-						update_symbol(table, s);
-	
-						free(temp_expr);
-						free(temp_code);
+						t = t->next_token;
 
 					}
+
+					strncat(temp_expr, ")", 2);
+
+					char *temp_reg = use_register(register_list);
+
+					char *temp_code = calloc(100, sizeof(char));
+					
+					//defining variable
+					free(temp_code);
+
+					temp_code = calloc(100, sizeof(char));
+
+					sprintf(temp_code, 
+							"\tldi %s, %s\n"
+							"\tsts %s, %s\n",
+							temp_reg, temp_expr, t_ast->var_name, temp_reg);
+
+					//reuse register for other operations
+					register_index--;
+
+					strncat(asm_code->asm_main_code, temp_code, strlen(temp_code));
+
+					//updating symbol table
+					symbol *s = new_var_symbol( t_ast->var_name,
+												t_ast->var_name,
+												"DSEG_VAR");
+
+					update_symbol(table, s);
+
+					free(temp_expr);
+					free(temp_code);
+
+
 
 				}else{
 

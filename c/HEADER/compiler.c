@@ -851,8 +851,8 @@ int parser_eat(token *t, char *type, error_list *err_list, size_t code_size){
 
 }
 
-//parse expressions
-token_list* parse_expressions(parser *p ){
+//parse arithmetic expressions
+token_list* parse_expressions(parser *p){
 
 	token_list *list = new_token_list();
 
@@ -877,6 +877,15 @@ token_list* parse_expressions(parser *p ){
 	return postfix;
 
 }
+
+/*/parse conditional expression
+token_list* parse_conditional_expressions(parser *p){
+
+	
+
+}*/
+
+
 
 //parse var declaration and definition
 ast* parse_var_def( parser *p, error_list *err_list, ast_l* ast_list){
@@ -1387,6 +1396,25 @@ ast* parse_function_call(parser *p,error_list *err_list,  ast_l *ast_list){
 
 }
 
+//parse conditional statements
+ast *parse_conditional_statements(parser *p,error_list *err_list,  ast_l *ast_list){
+
+	ast *node = new_ast("AST_CONDITIONAL_IF");
+
+	if (parser_eat(get_current_token(p), "T_KEYWORD", err_list, ast_list->line_count) == 0){
+
+		return NULL;
+
+	}
+
+	get_next_token(p); //(
+
+
+	return node;
+
+}
+
+
 //parse statements
 ast_l* parse_statements(parser *p, error_list *err_list){
 
@@ -1395,7 +1423,6 @@ ast_l* parse_statements(parser *p, error_list *err_list){
 	get_next_token(p);
 
 	while(strncmp(get_current_token(p)->type, "T_NULL", 6) != 0 ){
-
 
 		if( strncmp(get_current_token(p)->type, "T_KEYWORD", 10) == 0){
 
@@ -1407,9 +1434,19 @@ ast_l* parse_statements(parser *p, error_list *err_list){
 				
 					add_new_ast(ast_list, node);
 
+				}
+			}/*else if( strncmp(get_current_token(p)->content, "if", 2) == 0 ){
+
+				ast *node = parse_conditional_statements(p, err_list, ast_list);
+
+				if(node != NULL){
+
+					add_new_ast(ast_list, node);
 
 				}
-			}
+
+			}*/
+
 		}else if(strncmp(get_current_token(p)->type, "T_IDENTIFIER", 12) == 0){
 
 			token *t = peek_next_token(p);
@@ -1453,8 +1490,8 @@ ast_l* parse_statements(parser *p, error_list *err_list){
 
 		get_next_token(p);
 		
-		
 	}
+
 	return ast_list;
 
 }
