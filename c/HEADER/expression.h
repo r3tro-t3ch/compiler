@@ -12,6 +12,9 @@ int is_expression_token(token *t);
 //check if is operand
 int is_operator(token *t);
 
+//check if given token in a logical expression token or not
+int is_logical_expression_token(token *t);
+
 //check if operator is a logical operator
 int is_logical_operator(token *t);
 

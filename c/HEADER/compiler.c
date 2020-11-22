@@ -201,6 +201,12 @@ token* get_next_token(parser *p){
 		
 	}
 
+	if(p->l->current_char == '\t' ){
+
+		while(p->l->current_char == '\t')
+			next_char(p->l);
+
+	}
 
 	if( isalnum( p->l-> current_char) ){
 
@@ -415,7 +421,7 @@ token* get_next_token(parser *p){
 
 				}
 
-				t = new_token("T_BNOT", char_to_str(p->l->current_char));
+				t = new_token("T_LNOT", char_to_str(p->l->current_char));
 				p->current_token = t;	
 				next_char(p->l);
 				return t;
@@ -478,6 +484,12 @@ token* peek_next_token(parser *p){
 		
 	}
 
+	if(p->l->current_char == '\t' ){
+
+		while(p->l->current_char == '\t')
+			next_char(p->l);
+
+	}
 
 	if( isalnum( temp_p->l-> current_char) ){
 
@@ -670,7 +682,7 @@ token* peek_next_token(parser *p){
 
 				}
 
-				t = new_token("T_BNOT", char_to_str(temp_p->l->current_char));
+				t = new_token("T_LNOT", char_to_str(temp_p->l->current_char));
 				
 				next_char(temp_p->l);
 				return t;
@@ -878,12 +890,32 @@ token_list* parse_expressions(parser *p){
 
 }
 
-/*/parse conditional expression
+//parse conditional expression
 token_list* parse_conditional_expressions(parser *p){
 
-	
+	token_list *list = new_token_list();
 
-}*/
+	get_next_token(p);
+
+	while(is_logical_expression_token(get_current_token(p)) == 1){
+
+		add_new_token(list, get_current_token(p));
+
+		get_next_token(p);
+
+	}
+
+	if(list->token_count == 1){
+
+		return list;
+
+	}
+
+	token_list* postfix = infix_to_postfix(list);
+
+	return postfix;
+
+}
 
 
 
@@ -1409,11 +1441,217 @@ ast *parse_conditional_statements(parser *p,error_list *err_list,  ast_l *ast_li
 
 	get_next_token(p); //(
 
+	if (parser_eat(get_current_token(p), "T_LPAREN", err_list, ast_list->line_count) == 0){
+
+		return NULL;
+
+	}
+
+	token_list *expr = parse_conditional_expressions(p);
+
+	if( is_postfix_valid(expr) == 1 || expr->token_count == 1 ){
+
+		//raise error
+		error *e = new_error("Invalid conditional expression", ast_list->line_count);
+
+		add_new_error(err_list, e);
+
+		return NULL;		
+
+	}
+
+	node->conditional_statement_expr = expr;
+
+	if (parser_eat(get_current_token(p), "T_RPAREN", err_list, ast_list->line_count) == 0){
+
+		return NULL;
+
+	}
+
+	stack *s = new_stack();		
+
+	ast_l *true_ast_list = parse_statement_block(p,err_list, s, ast_list);
+
+	if(true_ast_list != NULL){
+
+		node->true_block = true_ast_list;
+		printf("\nif\n");
+		print_ast(true_ast_list);
+		printf("\n");
+
+	}else{
+
+		return NULL;
+
+	}
+
+	if( strncmp(get_current_token(p)->type, "T_NEWLINE", 9) == 0 ){
+
+		while(strncmp(get_current_token(p)->type, "T_NEWLINE", 9) == 0){
+			
+			parse_newline(p, err_list, ast_list);
+			get_next_token(p);
+
+		}
+
+	}
+
+
+	if( strncmp(get_current_token(p)->type, "T_KEYWORD", 9) == 0 ){
+
+		if( strncmp(get_current_token(p)->content, "else", 4) == 0){
+
+			if( parser_eat(get_current_token(p), "T_KEYWORD", err_list, ast_list->line_count) == 0 ){
+
+				return NULL;
+
+			}
+
+			ast_l *false_ast_list = parse_statement_block(p, err_list, s, ast_list);
+
+			node->type = "AST_CONDITIONAL_IF_ELSE";
+
+			if(false_ast_list != NULL){
+
+				node->false_block = false_ast_list;
+				printf("\n\nelse\n");
+				print_ast(false_ast_list);
+				printf("\n\n");
+
+			}else{
+				return NULL;
+			}
+
+		}
+
+	}else{
+
+		parse_newline(p, err_list, ast_list);
+
+	}
+
+	node->ast_node_index = ast_list->line_count;
 
 	return node;
 
 }
 
+//parse block of statements 
+ast_l* parse_statement_block(parser *p, error_list *err_list, stack *s, ast_l *parent_ast_list){
+
+	ast_l *ast_list = new_ast_list();
+
+	get_next_token(p); //{
+
+	if( parser_eat(get_current_token(p), "T_LBRACE", err_list, parent_ast_list->line_count) == 0 ){
+
+		return NULL;
+
+	}
+
+	push(s, get_current_token(p));
+
+	get_next_token(p);
+
+	if( strncmp(get_current_token(p)->type, "T_NEWLINE", 9) == 0 ){
+
+		while(strncmp(get_current_token(p)->type, "T_NEWLINE", 9) == 0){
+			
+			parse_newline(p, err_list, ast_list);
+			get_next_token(p);
+
+		}
+
+	}
+
+	while( s->stack_size > 0 && strncmp(get_current_token(p)->content, "T_RBRACE", 8) != 0 ){
+
+		if( strncmp(get_current_token(p)->type, "T_KEYWORD", 10) == 0){
+
+			if( strncmp(get_current_token(p)->content, "var", 3) == 0){
+	
+				ast* node = parse_var_def(p, err_list, ast_list);
+			
+				if(node != NULL){
+				
+					add_new_ast(ast_list, node);
+
+				}else{
+					return NULL;
+				}
+
+			}else if( strncmp(get_current_token(p)->content, "if", 2) == 0 ){
+
+				ast *node = parse_conditional_statements(p, err_list, ast_list);
+
+				if(node != NULL){
+
+					add_new_ast(ast_list, node);
+
+				}else{
+					return NULL;
+				}
+
+			}
+
+		}else if(strncmp(get_current_token(p)->type, "T_IDENTIFIER", 12) == 0){
+
+			token *t = peek_next_token(p);
+
+			if( strncmp(t->type, "T_EQUAL", 7) == 0 ){
+
+				ast *node = parse_var_assignment(p, err_list, ast_list);
+	
+				if(node != NULL){
+				
+					add_new_ast(ast_list, node);
+			
+				}else{
+					return NULL;
+				}
+
+			}else if( strncmp(t->type, "T_LPAREN", 8) == 0 ){
+
+				ast *node = parse_function_call(p, err_list, ast_list);
+
+				if( node != NULL ){
+
+					add_new_ast(ast_list, node);
+
+				}else{
+					return NULL;
+				}
+
+			}else{
+				parse_newline(p, err_list, ast_list);
+			}
+
+		}
+
+		if( strncmp(get_current_token(p)->type, "T_LBRACE", 8) == 0 ){
+
+			push(s, get_current_token(p));
+
+		}
+		if( strncmp(get_current_token(p)->type, "T_RBRACE", 8) == 0 ){
+
+			pop(s);
+
+		}
+		
+		if( strncmp(get_current_token(p)->type, "T_NEWLINE", 10) == 0 ){
+
+			parse_newline(p, err_list, ast_list);
+
+		}
+
+		get_next_token(p);
+		
+	}
+
+	return ast_list;
+
+}
 
 //parse statements
 ast_l* parse_statements(parser *p, error_list *err_list){
@@ -1435,7 +1673,7 @@ ast_l* parse_statements(parser *p, error_list *err_list){
 					add_new_ast(ast_list, node);
 
 				}
-			}/*else if( strncmp(get_current_token(p)->content, "if", 2) == 0 ){
+			}else if( strncmp(get_current_token(p)->content, "if", 2) == 0 ){
 
 				ast *node = parse_conditional_statements(p, err_list, ast_list);
 
@@ -1445,7 +1683,7 @@ ast_l* parse_statements(parser *p, error_list *err_list){
 
 				}
 
-			}*/
+			}
 
 		}else if(strncmp(get_current_token(p)->type, "T_IDENTIFIER", 12) == 0){
 

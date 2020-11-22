@@ -1,4 +1,4 @@
-var red1 = 12
+var red1 = 12 * 1000/ 100 - 108 
 var yellow = 10
 var red2 = 9
 var time = 1000

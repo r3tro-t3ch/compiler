@@ -177,6 +177,9 @@ ast* parse_function_call(parser *p,error_list *err_list,  ast_l *ast_list);
 //parse conditional statements
 ast *parse_conditional_statements(parser *p,error_list *err_list,  ast_l *ast_list);
 
+//parse block of statements 
+ast_l* parse_statement_block(parser *p, error_list *err_list, stack *s, ast_l *parent_ast_list);
+
 //parse statements
 ast_l* parse_statements(parser *p, error_list *err_list);
 

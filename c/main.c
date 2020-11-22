@@ -57,7 +57,7 @@ int main(int argc, char *argv[]){
 
 		}else{
 
-			//print_ast(ast_list);
+			print_ast(ast_list);
 			visitor_evaluate(ast_list, err_list);
 			//print_symbol_table(table);
 

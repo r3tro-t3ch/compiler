@@ -15,17 +15,6 @@ int is_expression_token(token *t){
 		strncmp(t->type, "T_FSLASH", 8) == 0 ||
 		strncmp(t->type, "T_MOD", 5) == 0 ||
 		strncmp(t->type, "T_STRING", 8) == 0 
-		/*strncmp(t->type, "T_EE", 4) == 0 ||
-		strncmp(t->type, "T_NE", 4) == 0 ||
-		strncmp(t->type, "T_GE", 4) == 0 ||
-		strncmp(t->type, "T_LE", 4) == 0 ||
-		strncmp(t->type, "T_GREATER", 9) == 0 ||
-		strncmp(t->type, "T_LESSER", 8 ) == 0 ||
-		strncmp(t->type, "T_LOR", 5) == 0 ||
-		strncmp(t->type, "T_LAND", 6) == 0 ||
-		strncmp(t->type, "T_BOR", 5) == 0 ||
-		strncmp(t->type, "T_BAND", 6) == 0 ||
-		strncmp(t->type, "T_BNOT", 6) == 0 */
 	  ){
 
 		return 1;
@@ -53,9 +42,46 @@ int is_operator(token *t){
 
 }
 
-//check if operator is a logical operator
-int is_logical_operator(token *t);
+//check if given token in a logical expression token or not
+int is_logical_expression_token(token *t){
 
+	if( strncmp(t->type, "T_IDENTIFIER", 12) == 0 ||
+		strncmp(t->type, "T_CONSTANT", 10) == 0 ||
+		strncmp(t->type, "T_STRING", 8) == 0 || 
+		is_logical_operator(t) == 1
+	  ){
+
+		return 1;
+
+	}
+
+	return 0;
+
+}
+
+//check if operator is a logical operator
+int is_logical_operator(token *t){
+
+	if( strncmp(t->type, "T_EE", 4) == 0 ||
+		strncmp(t->type, "T_NE", 4) == 0 ||
+		strncmp(t->type, "T_GE", 4) == 0 ||
+		strncmp(t->type, "T_LE", 4) == 0 ||
+		strncmp(t->type, "T_GREATER", 9) == 0 ||
+		strncmp(t->type, "T_LESSER", 8 ) == 0 ||
+		strncmp(t->type, "T_LOR", 5) == 0 ||
+		strncmp(t->type, "T_LAND", 6) == 0 ||
+		strncmp(t->type, "T_BOR", 5) == 0 ||
+		strncmp(t->type, "T_BAND", 6) == 0 ||
+		strncmp(t->type, "T_LNOT", 6) == 0
+		){
+
+		return 1;
+
+	}
+
+	return 0;
+
+}
 
 //new token list
 token_list* new_token_list(){
@@ -139,7 +165,7 @@ token* get_stack_top(stack *s){
 //stack pop operation
 token* pop(stack *s){
 
-	if(s->stack_size >= 0){
+	if(s->stack_size > 0){
 		token *t = s->top;
 		s->top = s->top->prev_token;
 		s->stack_size--;
@@ -155,6 +181,7 @@ void push(stack *s, token *t){
 	if(s->top == NULL){
 
 		s->top = t;
+		s->stack_size++;
 
 	}else{
 	
@@ -526,7 +553,7 @@ char* evaluate_expression_ast(token_list *node, error_list *err_list, symbol_tab
 
 				}else if( strncmp(t->type, "T_MINUS", 7) == 0 ){
 
-					sprintf(answer,"%d", left_operand - right_operand);
+					sprintf(answer,"%d", right_operand - left_operand);
 					push(STACK, new_token("T_CONSTANT", answer));
 
 				}else if( strncmp(t->type, "T_ASTERIX", 9) == 0 ){
@@ -536,7 +563,7 @@ char* evaluate_expression_ast(token_list *node, error_list *err_list, symbol_tab
 
 				}else if( strncmp(t->type,"T_FSLASH", 8) == 0 ){
 
-					sprintf(answer,"%d", left_operand / right_operand);
+					sprintf(answer,"%d", right_operand / left_operand);
 					push(STACK, new_token("T_CONSTANT", answer));
 				}
 			}
@@ -553,16 +580,56 @@ char* evaluate_expression_ast(token_list *node, error_list *err_list, symbol_tab
 //check precedence of operator
 int check_precedence(token *t){
 
-	if(	strncmp(t->type, "T_ASTERIX", 9) == 0 ||
+	/*if(
+		strncmp(t->type, "T_LPAREN", 8) == 0 ||
+		strncmp(t->type, "T_RPAREN", 8) == 0
+	  ){
+		return 11;
+	}else*/ if(
+		strncmp(t->type,"T_LNOT", 6) == 0
+	  ){
+		return 10;
+	}else if(	
+		strncmp(t->type, "T_ASTERIX", 9) == 0 ||
 		strncmp(t->type, "T_FSLASH", 8) == 0 ||
 		strncmp(t->type, "T_MOD", 5) == 0 
 	  ){
-		return 3;
+		return 9;
 	}else if(
 		strncmp(t->type, "T_PLUS", 6) == 0 ||
 		strncmp(t->type, "T_MINUS", 7) == 0
 		){
-		return 2;
+		return 8;
+	}else if(
+		strncmp(t->type,"T_LE", 4) == 0 ||
+		strncmp(t->type,"T_GE", 4) == 0 ||
+		strncmp(t->type,"T_GREATER", 9) == 0 ||
+		strncmp(t->type,"T_LESSER", 8) == 0 
+		){
+
+		return 7;
+
+	}else if(
+		strncmp(t->type,"T_EE", 4) == 0 ||
+		strncmp(t->type,"T_NE", 4) == 0
+		){
+		return 6;
+	}else if(
+		strncmp(t->type,"T_BAND", 6) == 0
+		){
+		return 5;
+	}else if(
+		strncmp(t->type,"T_BOR", 5) == 0
+		){
+		return 4;
+	}else if(
+		strncmp(t->type,"T_LAND", 6) == 0
+		){
+		return 3;
+	}else if(
+		strncmp(t->type,"T_LOR", 5) == 0
+		){
+		return 2; 
 	}else{
 		return 1;
 	}
@@ -617,12 +684,10 @@ token_list* infix_to_postfix(token_list *list){
 
 			pop(STACK);
 
-		}
+		}else{
+			if( is_operator(t) == 1 || is_logical_operator(t) == 1 ){
 
-		else{
-			if( is_operator(t) == 1 ){
-
-				while(check_precedence(t) <= check_precedence(get_stack_top(STACK))){
+				while( check_precedence(t) <= check_precedence(get_stack_top(STACK)) ){
 
 					add_new_token(postfix_expression, get_stack_top(STACK));
 					pop(STACK);
@@ -742,7 +807,7 @@ int is_postfix_valid(token_list* list){
 
 	while(t != NULL){
 
-		if( is_operator(t) == 1 ){
+		if( is_operator(t) == 1 || is_logical_operator(t) == 1 ){
 
 			operator_count++;
 
