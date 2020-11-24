@@ -1474,6 +1474,12 @@ ast *parse_conditional_statements(parser *p,error_list *err_list,  ast_l *ast_li
 
 	if(true_ast_list != NULL){
 
+		if(true_ast_list->ast_index == 0){
+
+			add_new_error(err_list, new_error("empty if block", ast_list->line_count));
+			return NULL;
+
+		}
 		node->true_block = true_ast_list;
 		printf("\nif\n");
 		print_ast(true_ast_list);
@@ -1483,6 +1489,12 @@ ast *parse_conditional_statements(parser *p,error_list *err_list,  ast_l *ast_li
 
 		return NULL;
 
+	}
+
+	token *t = peek_next_token(p);
+	
+	if(strncmp(t->type,"T_NULL", 6) == 0){
+		return node;
 	}
 
 	if( strncmp(get_current_token(p)->type, "T_NEWLINE", 9) == 0 ){
@@ -1512,6 +1524,13 @@ ast *parse_conditional_statements(parser *p,error_list *err_list,  ast_l *ast_li
 			node->type = "AST_CONDITIONAL_IF_ELSE";
 
 			if(false_ast_list != NULL){
+
+				if(false_ast_list->ast_index == 0){
+
+					add_new_error(err_list, new_error("empty else block", ast_list->line_count));
+					return NULL;
+
+				}
 
 				node->false_block = false_ast_list;
 				printf("\n\nelse\n");

@@ -18,7 +18,6 @@ int is_logical_expression_token(token *t);
 //check if operator is a logical operator
 int is_logical_operator(token *t);
 
-
 typedef struct TOKEN_LIST{
 
 	token *first_token;
@@ -34,6 +33,13 @@ typedef struct STACK{
 
 } stack;
 
+typedef struct OPERAND{
+
+	char *value;
+	char *data_type;
+
+} operand;
+
 //new token list
 token_list* new_token_list();
 
@@ -42,6 +48,9 @@ void add_new_token (token_list *list, token *t);
 
 //reverse token list
 void reverse_token_list(token_list *list);
+
+//create new operand
+operand *new_operand(char *value, char *data_type);
 
 //create a stack
 stack* new_stack();
@@ -64,11 +73,20 @@ int is_valid_string_expr(token *list);
 //check for undeclared var in expr
 int is_undeclared_var_present(token_list *list, symbol_table *table, error_list *err_list, int ast_node_index);
 
+//checking if given expression is a simple expression or not
+int is_simple_expr(token_list *list);
+
 //checking if there is any var defined inside asm
 int is_DSEG(token_list *t, symbol_table *table);
 
 //evaluate expression tree and return the answer
 char* evaluate_expression_ast(token_list *node, error_list *err_list, symbol_table *table , size_t line, int *STRING_FLAG);
+
+//evaluate expression tree and return the answer
+char* evaluate_predetermined_logical_expression(token_list *node, error_list *err_list, symbol_table *table , size_t line);
+
+//evaluate expression tree and return the answer
+char* evaluate_logical_expression(token_list *node, error_list *err_list, symbol_table *table , size_t line, int *STRING_FLAG);
 
 //check precedence of operator
 int check_precedence(token *t);

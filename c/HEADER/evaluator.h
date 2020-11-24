@@ -52,6 +52,9 @@ void wait_function_code_gen(char *value, code *asm_code, error_list *err_list, a
 //evaluate function calls
 void visitor_evaluate_function_call(ast *t_ast, error_list *err_list, code *asm_code, symbol_table *table);
 
+//evaluate conditional if statements
+void visitor_evaluate_conditional_if_statements(ast *t_ast, error_list *err_list, code *asm_code, symbol_table *table);
+
 //visitor
 void visitor_evaluate(ast_l *ast_list, error_list *err_list);
 

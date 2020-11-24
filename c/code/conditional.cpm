@@ -1,14 +1,13 @@
-var a = 1
-var b = "1"
-if( a == b ){
+var led1 = 1
+var led2 = 1 
+var button = 8
+
+if( led1 == led2 && button == 8){
 
 	output(a, HIGH)
-	wait(1000)
-	output(a, LOW)
 
 }else{
 
-	output(a, HIGH)
-	wait(3000)
-	output(a, LOW)
+	output(1, LOW)
+
 }

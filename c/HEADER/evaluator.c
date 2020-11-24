@@ -728,6 +728,31 @@ code* new_asm_code(){
 
 }
 
+//evaluate conditional if statements
+void visitor_evaluate_conditional_if_statements(ast *t_ast, error_list *err_list, code *asm_code, symbol_table *table){
+
+	token_list *logical_expr = t_ast->conditional_statement_expr;
+
+	//check if true block and false block can be predetermined
+	//and only that block of code is generated
+
+	if( is_DSEG(logical_expr, table) == 1 ){
+
+		// cannot be predetermined	
+		
+
+	}else{
+
+		//can be predetermined
+		char* answer = evaluate_predetermined_logical_expression(t_ast->conditional_statement_expr, err_list, table, t_ast->ast_node_index);			
+
+		if( answer != NULL ){
+			printf("condition ans = %s\n",  answer);
+		}
+	}
+
+}
+
 //visitor
 void visitor_evaluate(ast_l *ast_list, error_list* err_list){
 
@@ -1180,6 +1205,14 @@ void visitor_evaluate(ast_l *ast_list, error_list* err_list){
 		}else if( strncmp(t_ast->type,"AST_BUILTIN_FUNCTION_CALL",26) == 0 ){
 
 			visitor_evaluate_function_call(t_ast, err_list, asm_code, table);			
+
+		}else if( strncmp(t_ast->type, "AST_CONDITIONAL_IF", 18) == 0 ){
+
+			visitor_evaluate_conditional_if_statements(t_ast, err_list, asm_code, table);
+
+		}else if( strncmp(t_ast->type, "AST_CONDITIONAL_IF_ELSE", 23) == 0 ){
+
+			visitor_evaluate_conditional_if_statements(t_ast, err_list, asm_code, table);
 
 		}//other asts
 

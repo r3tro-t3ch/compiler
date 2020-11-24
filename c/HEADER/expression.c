@@ -136,6 +136,31 @@ void reverse_token_list(token_list *list){
 
 }
 
+//create new operand
+operand *new_operand(char *value, char *data_type){
+
+	operand *o = calloc(1, sizeof(operand));
+	o->value = value;
+
+	if( strncmp(data_type, "T_STRING", 8) == 0 ||
+		strncmp(data_type, "STRING", 6) == 0 ){
+
+		o->data_type = "STRING";
+
+	}else if( strncmp(data_type, "T_BOOLEAN", 9) == 0 ){
+
+		o->data_type = "BOOL";
+
+	}else{
+
+		o->data_type = "NUMBER";
+
+	}
+
+	return o;
+
+}
+
 //create a stack
 stack* new_stack(){
 
@@ -297,6 +322,17 @@ int is_undeclared_var_present(token_list *list, symbol_table *table, error_list 
 	}
 
 	return FLAG;
+
+}
+
+//checking if given expression is a simple expression or not
+int is_simple_expr(token_list *list){
+
+	if(list->token_count == 3){
+		return 1;
+	}
+
+	return 0;
 
 }
 
@@ -576,6 +612,351 @@ char* evaluate_expression_ast(token_list *node, error_list *err_list, symbol_tab
 	return STACK->top->content;
 
 }
+
+//evaluate expression tree and return the answer
+char* evaluate_predetermined_logical_expression(token_list *node, error_list *err_list, symbol_table *table , size_t line){
+
+	token *t = node->first_token;
+
+	stack *STACK = new_stack();
+
+	int error_flag = 0;
+	
+	while( t != NULL){
+
+		if( is_logical_operator(t) != 1 ){
+
+			//operand
+			push(STACK, t);
+
+		}else{
+
+			//operators
+
+			token *right_operand = pop(STACK);	
+			token *left_operand = pop(STACK);	
+			
+			operand *left, *right;
+
+
+			if( strncmp(left_operand->type, "T_IDENTIFIER", 12) == 0 ||
+				strncmp(right_operand->type, "T_IDENTIFIER", 12) == 0){
+
+				if( strncmp(left_operand->type, "T_IDENTIFIER", 12) == 0 &&
+					strncmp(right_operand->type, "T_IDENTIFIER", 12) != 0 ){
+
+					symbol *s = search_symbol(table, left_operand->content);
+
+					if( s != NULL ){
+
+						left = new_operand(s->value, s->data_type);
+						right = new_operand(right_operand->content, right_operand->type);
+
+					}else{
+
+						//variable not present error
+
+						size_t err_msg_len = strlen(left_operand->content) + ERR_MSG_VAR_NOT_PRESENT_LEN;
+
+						char *err_msg = calloc(err_msg_len, sizeof(char));
+
+						snprintf(err_msg, err_msg_len,
+								 "variable %s is not declared\n",
+								 left_operand->content);
+
+						add_new_error(err_list, new_error(err_msg, line));
+
+						error_flag = 1;
+					}
+
+				}else if(
+					strncmp(left_operand->type, "T_IDENTIFIER", 12) != 0 &&
+					strncmp(right_operand->type, "T_IDENTIFIER", 12) == 0){
+
+					symbol *s = search_symbol(table, right_operand->content);
+
+					if( s != NULL ){
+
+						left = new_operand(left_operand->content, left_operand->type);
+						right = new_operand(s->value, s->data_type);
+
+					}else{
+
+						//variable not present error
+						size_t err_msg_len = strlen(right_operand->content) + ERR_MSG_VAR_NOT_PRESENT_LEN;
+
+						char *err_msg = calloc(err_msg_len, sizeof(char));
+
+						snprintf(err_msg, err_msg_len,
+								 "variable %s is not declared\n",
+								 right_operand->content);
+
+						add_new_error(err_list, new_error(err_msg, line));
+
+						error_flag = 1;
+					}
+				}else{
+
+					symbol *l = search_symbol(table, left_operand->content);
+					symbol *r = search_symbol(table, right_operand->content);
+
+					if( l != NULL && r != NULL ){
+
+						left = new_operand(l->value, l->data_type);
+						right = new_operand(r->value, r->data_type);
+
+					}else{
+
+						//variable not present error
+						if( l == NULL && r != NULL ){
+
+							size_t err_msg_len = strlen(left_operand->content) + ERR_MSG_VAR_NOT_PRESENT_LEN;
+
+							char *err_msg = calloc(err_msg_len, sizeof(char));
+
+							snprintf(err_msg, err_msg_len,
+									 "variable %s is not declared\n",
+									 left_operand->content);
+
+							add_new_error(err_list, new_error(err_msg, line));
+
+						}else if( l != NULL  && r == NULL){
+	
+							size_t err_msg_len = strlen(right_operand->content) + ERR_MSG_VAR_NOT_PRESENT_LEN;
+
+							char *err_msg = calloc(err_msg_len, sizeof(char));
+
+							snprintf(err_msg, err_msg_len,
+									 "variable %s is not declared\n",
+									 right_operand->content);
+
+							add_new_error(err_list, new_error(err_msg, line));
+
+						}else{
+
+							size_t err_msg_len = strlen(left_operand->content) + ERR_MSG_VAR_NOT_PRESENT_LEN;
+
+							char *err_msg = calloc(err_msg_len, sizeof(char));
+
+							snprintf(err_msg, err_msg_len,
+									 "variable %s is not declared\n",
+									 left_operand->content);
+
+							add_new_error(err_list, new_error(err_msg, line));
+
+							err_msg_len = strlen(right_operand->content) + ERR_MSG_VAR_NOT_PRESENT_LEN;
+
+							err_msg = calloc(err_msg_len, sizeof(char));
+
+							snprintf(err_msg, err_msg_len,
+									 "variable %s is not declared\n",
+									 right_operand->content);
+
+							add_new_error(err_list, new_error(err_msg, line));
+
+						}
+
+						error_flag = 1;
+					}
+
+				}
+
+			}else{
+
+				//both constants
+				left = new_operand(left_operand->content, left_operand->type);
+				right = new_operand(right_operand->content, right_operand->type);
+
+			}
+
+			if(error_flag == 1){
+				continue;
+			}
+
+			if( strncmp(t->type, "T_EE", 4) == 0 ){
+			
+				//"=="
+				if( strncmp(left->data_type, right->data_type, strlen(left->data_type)) == 0 && 
+					strncmp(left->value, right->value, strlen(left->value)) == 0 ){
+
+					push(STACK, new_token("T_BOOLEAN","true"));
+
+				}else{
+	
+					push(STACK, new_token("T_BOOLEAN","false"));
+
+				}
+
+			}else if( strncmp(t->type, "T_GREATER", 9) == 0 ){
+
+				//">"
+				if( strncmp(left->data_type, "NUMBER", strlen(left->data_type)) == 0 &&
+					strncmp(left->data_type, "NUMBER", strlen(left->data_type)) == 0){
+
+					int l = atoi(left->value);	
+					int r = atoi(right->value);	
+	
+					if( l > r ){
+					
+						push(STACK, new_token("T_BOOLEAN","true"));
+
+					}else{
+
+						push(STACK, new_token("T_BOOLEAN","false"));
+
+					}
+
+				}else{
+
+					add_new_error(err_list, new_error("cannot compare numbers to bool or strings", line));
+					error_flag = 1;
+					continue;
+
+				}
+
+			}else if( strncmp(t->type, "T_LESSER", 8) == 0 ){
+
+				//"<"
+				if( strncmp(left->data_type, "NUMBER", strlen(left->data_type)) == 0 &&
+					strncmp(left->data_type, "NUMBER", strlen(left->data_type)) == 0){
+
+					int l = atoi(left->value);	
+					int r = atoi(right->value);	
+	
+					printf("\nl -> %d, r-> %d \n\n", l, r);
+					if( l < r ){
+				
+						push(STACK, new_token("T_BOOLEAN","true"));
+
+					}else{
+
+						push(STACK, new_token("T_BOOLEAN","false"));
+
+					}
+
+				}else{
+
+					add_new_error(err_list, new_error("cannot compare numbers to bool or strings", line));
+					error_flag = 1;
+					continue;
+
+				}
+			}else if( strncmp(t->type, "T_GE", 4) == 0 ){
+
+				//">="
+				if( strncmp(left->data_type, "NUMBER", strlen(left->data_type)) == 0 &&
+					strncmp(left->data_type, "NUMBER", strlen(left->data_type)) == 0){
+
+					int l = atoi(left->value);	
+					int r = atoi(right->value);	
+	
+					if( l >= r ){
+					
+						push(STACK, new_token("T_BOOLEAN","true"));
+
+					}else{
+
+						push(STACK, new_token("T_BOOLEAN","false"));
+
+					}
+
+				}else{
+
+					add_new_error(err_list, new_error("cannot compare numbers to bool or strings", line));
+					error_flag = 1;
+					continue;
+
+				}
+			}else if( strncmp(t->type, "T_LE", 4) == 0 ){
+
+				//"<="
+				if( strncmp(left->data_type, "NUMBER", strlen(left->data_type)) == 0 &&
+					strncmp(left->data_type, "NUMBER", strlen(left->data_type)) == 0){
+
+					int l = atoi(left->value);	
+					int r = atoi(right->value);	
+	
+					if( l <= r ){
+					
+						push(STACK, new_token("T_BOOLEAN","true"));
+
+					}else{
+
+						push(STACK, new_token("T_BOOLEAN","false"));
+
+					}
+
+				}else{
+
+					add_new_error(err_list, new_error("cannot compare numbers to bool or strings", line));
+					error_flag = 1;
+					continue;
+
+				}
+
+			}else if( strncmp(t->type, "T_NE", 4) == 0 ){
+
+				//"!="
+				if( strncmp(left->data_type, right->data_type, strlen(left->data_type)) != 0 || 
+					strncmp(left->value, right->value, strlen(left->value)) != 0 ){
+
+					push(STACK, new_token("T_BOOLEAN","true"));
+
+				}else{
+
+					push(STACK, new_token("T_BOOLEAN","false"));
+
+				}
+				
+			}else if( strncmp(t->type, "T_LAND", 6) == 0 ){
+
+				//"&&"
+				if( strncmp( left->value, "true", 4) == 0 && 
+					strncmp(right->value, "true", 4) == 0 ){
+		
+						push(STACK, new_token("T_BOOLEAN","true"));
+
+				}else{
+
+					push(STACK, new_token("T_BOOLEAN","false"));
+
+				}
+
+
+			}else if( strncmp(t->type, "T_LOR", 5) == 0 ){
+
+				//"||"
+				if( strncmp( left->value, "true", 4) == 0 ||
+						strncmp(right->value, "true", 4) == 0){
+	
+						push(STACK, new_token("T_BOOLEAN","true"));
+
+				}else{
+
+					push(STACK, new_token("T_BOOLEAN","false"));
+
+				}
+
+			}
+
+
+		}
+
+		t = t->next_token;
+
+	}
+
+	if(error_flag == 1){
+		return NULL;
+	}
+
+	return STACK->top->content;
+
+}
+
+//evaluate expression tree and return the answer
+char* evaluate_logical_expression(token_list *node, error_list *err_list, symbol_table *table , size_t line, int *STRING_FLAG);
+
 
 //check precedence of operator
 int check_precedence(token *t){

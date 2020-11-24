@@ -14,7 +14,9 @@
 ;************************************
 
 .DSEG
-	a: .BYTE 1
+	led1: .BYTE 1
+	led2: .BYTE 1
+	button: .BYTE 1
 .CSEG
 
 
@@ -24,7 +26,11 @@ setup:
 
 main:
 	ldi r16, 1
-	sts a, r16
+	sts led1, r16
+	ldi r16, 1
+	sts led2, r16
+	ldi r16, 8
+	sts button, r16
 
 
 end:

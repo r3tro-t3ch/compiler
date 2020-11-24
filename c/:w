@@ -1,1258 +1,1017 @@
-#include "evaluator.h"
-#include <string.h>
-#include "symbol_table.h"
-#include <stdio.h>
-#include <ctype.h>
+#include <stdlib.h>
 #include "expression.h"
+#include <string.h>
+#include <stdio.h>
+#include "symbol_table.h"
+#include <ctype.h>
 
-//atmega328p general purpose register set
-static char *register_list[] = { 
-	"r16",
-	"r17",
-	"r18",
-	"r19",
-	"r20",
-	"r21",
-	"r22",
-	"r23",
-	"r24",
-	"r25",
-	"r26",
-	"r27",
-	"r28",
-	"r29",
-	"r30",
-	"r31",
-	"r32"
-};
+int is_expression_token(token *t){
 
-static size_t register_index = 0;
+	if( strncmp(t->type, "T_IDENTIFIER", 12) == 0 ||
+		strncmp(t->type, "T_CONSTANT", 10) == 0 ||
+		strncmp(t->type, "T_PLUS", 6) == 0 ||
+		strncmp(t->type, "T_MINUS", 7) == 0 ||
+		strncmp(t->type, "T_ASTERIX", 9) == 0 ||
+		strncmp(t->type, "T_FSLASH", 8) == 0 ||
+		strncmp(t->type, "T_MOD", 5) == 0 ||
+		strncmp(t->type, "T_STRING", 8) == 0 
+	  ){
 
-size_t delay_code_flag = 0;
+		return 1;
 
-//registers
-char* use_register(char *register_list[]){
+	}
 
-	if(register_index == GENERAL_PURPOSE_REGISTER_COUNT){
+	return 0;
+}
+
+//check if is operand
+int is_operator(token *t){
+
+	if(strncmp(t->type, "T_PLUS", 6) == 0 ||
+		strncmp(t->type, "T_MINUS", 7) == 0 ||
+		strncmp(t->type, "T_ASTERIX", 9) == 0 ||
+		strncmp(t->type, "T_FSLASH", 8) == 0 ||
+		strncmp(t->type, "T_MOD", 5) == 0 
+	  ){
+
+		return 1;
+
+	}
+
+	return 0;
+
+}
+
+//check if given token in a logical expression token or not
+int is_logical_expression_token(token *t){
+
+	if( strncmp(t->type, "T_IDENTIFIER", 12) == 0 ||
+		strncmp(t->type, "T_CONSTANT", 10) == 0 ||
+		strncmp(t->type, "T_STRING", 8) == 0 || 
+		is_logical_operator(t) == 1
+	  ){
+
+		return 1;
+
+	}
+
+	return 0;
+
+}
+
+//check if operator is a logical operator
+int is_logical_operator(token *t){
+
+	if( strncmp(t->type, "T_EE", 4) == 0 ||
+		strncmp(t->type, "T_NE", 4) == 0 ||
+		strncmp(t->type, "T_GE", 4) == 0 ||
+		strncmp(t->type, "T_LE", 4) == 0 ||
+		strncmp(t->type, "T_GREATER", 9) == 0 ||
+		strncmp(t->type, "T_LESSER", 8 ) == 0 ||
+		strncmp(t->type, "T_LOR", 5) == 0 ||
+		strncmp(t->type, "T_LAND", 6) == 0 ||
+		strncmp(t->type, "T_BOR", 5) == 0 ||
+		strncmp(t->type, "T_BAND", 6) == 0 ||
+		strncmp(t->type, "T_LNOT", 6) == 0
+		){
+
+		return 1;
+
+	}
+
+	return 0;
+
+}
+
+//new token list
+token_list* new_token_list(){
+
+	token_list *list = calloc(1, sizeof(token_list));
+	list->first_token = NULL;
+	list->last_token = NULL;
+	list->token_count = 0;
+	return list;
+
+}
+
+//add new token
+void add_new_token(token_list *list, token *t){
+
+	if(list->first_token == NULL){
+
+		list->first_token = t;
+		list->last_token = t;
+		list->token_count++;
+
+	}else{
+
+		list->last_token->next_token = t;
+		t->prev_token = list->last_token;
+		list->last_token = t;
+		list->token_count++;
+
+	}
+
+}
+
+//reverse token list
+void reverse_token_list(token_list *list){
+
+	token *current = list->first_token;
+	list->last_token = list->first_token;
+	token *temp = NULL;
+
+	while(current != NULL){
+
+		temp = current->prev_token;
+		current->prev_token = current->next_token;
+		current->next_token = temp;
+		current = current->prev_token;
+
+	}
+
+	if(temp != NULL){
+		list->first_token = temp->prev_token;
+	}
+
+}
+
+//create a stack
+stack* new_stack(){
+
+	stack *s = calloc(1, sizeof(stack));
+	s->top = NULL;
+	s->stack_size = 0;
+	return s;
+
+}
+
+//get the top value of stack
+token* get_stack_top(stack *s){
+
+	if(s->top == NULL){
 		return NULL;
 	}
 
-	char *reg = register_list[register_index];
-
-	register_index++;
-
-	return reg;
+	token *t = calloc(1, sizeof(token));
+	t->content = s->top->content;
+	t->type = s->top->type;
+	t->next_token = NULL;
+	t->prev_token = NULL;
+	return t;
 
 }
 
-//input function call code generation
-void input_function_code_gen(char *reg, char *first_arg, code *asm_code, error_list *err_list, ast *t_ast){
+//stack pop operation
+token* pop(stack *s){
 
+	if(s->stack_size > 0){
+		token *t = s->top;
+		s->top = s->top->prev_token;
+		s->stack_size--;
+		return t;
+	}else{
+		return NULL;
+	}
+}
 
-	char *temp_reg = use_register(register_list);
+//stack push operation
+void push(stack *s, token *t){
 
-	
+	if(s->top == NULL){
 
-	char *input_code = calloc(300, sizeof(char));
-
-	char *s = first_arg;
-
-	if(strncmp(s,"13", 2) == 0){
-
-		strncat(asm_code->asm_setup_code,"\tcbi DDRB, 5\n", 14);
-		
-		sprintf(input_code,
-					"\tnop\n"
-					"\tin %s, 32\n"
-					"\tandi %s, 32\n"
-					"\tsts %s, %s\n"
-					, temp_reg, temp_reg, reg , temp_reg);	
-		
-		strncat(asm_code->asm_main_code, input_code, strlen(input_code));
-
-		register_index--;
-
-	}else if(strncmp(s,"12", 2) == 0){
-								
-		strncat(asm_code->asm_setup_code,"\tcbi DDRB, 4\n", 14);
-
-		sprintf(input_code,
-					"\tnop\n"
-					"\tin %s, 16\n"
-					"\tandi %s, 16\n"
-					"\tsts %s, %s\n"
-					, temp_reg, temp_reg, reg, temp_reg);	
-		
-		strncat(asm_code->asm_main_code, input_code, strlen(input_code));
-
-		register_index--;
-
-	}else if(strncmp(s,"11", 2) == 0){
-
-		strncat(asm_code->asm_setup_code,"\tcbi DDRB, 3\n", 14);
-
-		sprintf(input_code,
-					"\tnop\n"
-					"\tin %s, 8\n"
-					"\tandi %s, 8\n"
-					"\tsts %s, %s\n"
-					,temp_reg, temp_reg ,reg, temp_reg);	
-		
-		strncat(asm_code->asm_main_code, input_code, strlen(input_code));
-
-		register_index--;
-
-	}else if(strncmp(s,"10", 2) == 0){
-								
-		strncat(asm_code->asm_setup_code,"\tcbi DDRB, 2\n", 14);
-
-		sprintf(input_code,
-					"\tnop\n"
-					"\tin %s, 4\n"
-					"\tandi %s, 4\n"
-					"\tsts %s, %s\n"
-					,temp_reg, temp_reg, reg, temp_reg);	
-		
-		strncat(asm_code->asm_main_code, input_code, strlen(input_code));
-		
-		register_index--;
-							
-	}else if(strncmp(s,"9", 1) == 0){
-
-		strncat(asm_code->asm_setup_code,"\tcbi DDRB, 1\n", 14);
-
-		sprintf(input_code,
-					"\tnop\n"
-					"\tin %s, 2\n"
-					"\tandi %s, 2\n"
-					"\tsts %s, %s\n"
-					,temp_reg, temp_reg, reg, temp_reg);	
-		
-		strncat(asm_code->asm_main_code, input_code, strlen(input_code));
-		
-		register_index--;
-
-	}else if(strncmp(s,"8", 1) == 0){
-
-		strncat(asm_code->asm_setup_code,"\tcbi DDRB, 0\n", 14);
-
-		sprintf(input_code,
-					"\tnop\n"
-					"\tin %s, 1\n"
-					"\tandi %s, 1\n"
-					"\tsts %s, %s\n"
-					,temp_reg, temp_reg, reg, temp_reg);	
-		
-		strncat(asm_code->asm_main_code, input_code, strlen(input_code));
-		
-		register_index--;
-
-	}else if(strncmp(s,"7", 1) == 0){
-
-		strncat(asm_code->asm_setup_code,"\tcbi DDRD, 7\n", 14);
-
-		sprintf(input_code,
-					"\tnop\n"
-					"\tin %s, 128\n"
-					"\tandi %s, 128\n"
-					"\tsts %s, %s\n"
-					,temp_reg, temp_reg, reg, temp_reg);	
-		
-		strncat(asm_code->asm_main_code, input_code, strlen(input_code));
-		register_index--;
-
-	}else if(strncmp(s,"6", 1) == 0){
-
-		strncat(asm_code->asm_setup_code,"\tcbi DDRD, 6\n", 14);
-		register_index--;
-
-		sprintf(input_code,
-					"\tnop\n"
-					"\tin %s, 64\n"
-					"\tandi %s, 64\n"
-					"\tsts %s, %s\n"
-					,temp_reg, temp_reg, reg, temp_reg);	
-		
-		strncat(asm_code->asm_main_code, input_code, strlen(input_code));
-		register_index--;
-
-	}else if(strncmp(s,"5", 1) == 0){
-
-		strncat(asm_code->asm_setup_code,"\tcbi DDRD, 5\n", 14);
-
-		sprintf(input_code,
-					"\tnop\n"
-					"\tin %s, 32\n"
-					"\tandi %s, 32\n"
-					"\tsts %s, %s\n"
-					,temp_reg, temp_reg, reg, temp_reg);	
-		
-		strncat(asm_code->asm_main_code, input_code, strlen(input_code));
-		register_index--;
-
-	}else if(strncmp(s,"4", 1) == 0){
-
-		strncat(asm_code->asm_setup_code,"\tcbi DDRD, 4\n", 14);
-
-		sprintf(input_code,
-					"\tnop\n"
-					"\tin %s, 16\n"
-					"\tandi %s, 16\n"
-					"\tsts %s, %s\n"
-					,temp_reg,temp_reg, reg,temp_reg);	
-		
-		strncat(asm_code->asm_main_code, input_code, strlen(input_code));
-		register_index--;
-
-	}else if(strncmp(s,"3", 1) == 0){
-
-		strncat(asm_code->asm_setup_code,"\tcbi DDRD, 3\n", 14);
-
-		sprintf(input_code,
-					"\tnop\n"
-					"\tin %s,  8\n"
-					"\tandi %s,  8\n"
-					"\tsts %s, %s\n"
-					,temp_reg,temp_reg, reg,temp_reg);	
-		
-		strncat(asm_code->asm_main_code, input_code, strlen(input_code));
-		register_index--;
-
-	}else if(strncmp(s,"2", 1) == 0){
-
-		strncat(asm_code->asm_setup_code,"\tcbi DDRD, 2\n", 14);
-
-		sprintf(input_code,
-					"\tnop\n"
-					"\tin %s, 4\n"
-					"\tandi %s, 4\n"
-					"\tsts %s, %s\n"
-					,temp_reg,temp_reg, reg,temp_reg);	
-		
-		strncat(asm_code->asm_main_code, input_code, strlen(input_code));
-
-		register_index--;
-	}else if(strncmp(s,"1", 1) == 0){
-
-		strncat(asm_code->asm_setup_code,"\tcbi DDRD, 1\n", 14);
-
-		sprintf(input_code,
-					"\tnop\n"
-					"\tin %s, 2\n"
-					"\tandi %s, 2\n"
-					"\tsts %s, %s\n"
-					,temp_reg,temp_reg, reg,temp_reg);	
-		
-		strncat(asm_code->asm_main_code, input_code, strlen(input_code));
-
-		register_index--;
-
-	}else if(strncmp(s,"0", 1) == 0){
-
-		strncat(asm_code->asm_setup_code,"\tcbi DDRD, 0\n", 14);
-		
-		sprintf(input_code,
-					"\tnop\n"
-					"\tin %s, 1\n"
-					"\tandi %s, 1\n"
-					"\tsts %s, %s\n"
-					,temp_reg,temp_reg, reg,temp_reg);	
-		
-		strncat(asm_code->asm_main_code, input_code, strlen(input_code));
-
-		register_index--;
+		s->top = t;
+		s->stack_size++;
 
 	}else{
-									
-		char *err_msg = calloc(1,sizeof(char));
-
-		size_t err_msg_len = 31 + strlen(s);
-
-		snprintf(err_msg, err_msg_len, "Pin %s not present in atmega328p\n", s);
-
-		error *e = new_error(err_msg, t_ast->ast_node_index);
-
-		add_new_error(err_list,e);
+	
+		t->prev_token = s->top;
+		s->top->next_token = t;
+		s->top = t;
+		s->stack_size++;
 
 	}
 }
 
-//evaluate input function call
-void visitor_evaluate_input_funtion_call(char *reg,  ast *t_ast, error_list *err_list, code *asm_code, symbol_table *table){
+//check if a string is present in in given expression
+int string_present(token *list, symbol_table *table){
 
-	function_args *first_arg = t_ast->args_list->first_arg;
+	//print_symbol_table(table);
+
+	int flag = 0;
+
+	token *t = list;
+
+	while(t != NULL){
+	
+//		printf("token -> %s \n", t->content);
+
+		if( strncmp( t->type, "T_STRING", 8 ) == 0){
+
+			flag = 1;
+			break;
+
+		}else if( strncmp( t->type, "T_IDENTIFIER", 12 )  == 0){
+
+			symbol *s = search_symbol(table, t->content);		
+
+			if( strncmp(s->data_type, "STRING", 6) == 0){
+
+				flag = 1;
+				break;
+
+			}
+
+		}
+
+		t = t->next_token;
+
+	}
+
+	return flag;
+
+}
+
+//check if the string expression only contains + ot T_PLUS
+int is_valid_string_expr(token *list){
+
+	int flag = 0;
+
+	token *t = list;
+
+	while(t != NULL){
+	
+		if( strncmp( t->type , "T_ASTERIX", 9) == 0 ||
+			strncmp( t->type, "T_MINUS",7 ) == 0 ||
+			strncmp( t->type, "T_FSLASH", 8 ) == 0){
+
+			flag = 1;
+			break;
+
+		}
+
+		t = t->next_token;
+
+	}
+
+	return flag;
+
+}
+
+//check for undeclared var in expr
+int is_undeclared_var_present(token_list *list, symbol_table *table, error_list *err_list, int ast_node_index){
+
+	int FLAG = 0;
 
 	symbol *s;
 
-	if( strncmp(first_arg->arg_type, "T_IDENTIFIER", 12) == 0){
+	token *t = list->first_token;
 
-		s = search_symbol(table, first_arg->arg_name);
+	while(t != NULL){
 
-		if( s != NULL){
+		if( strncmp(t->type, "T_IDENTIFIER", 12) == 0 ){
 
-			input_function_code_gen(reg , s->value, asm_code, err_list, t_ast);
+			s = search_symbol(table, t->content);
 
-		}else{
+			if( s == NULL ){
 
-			size_t err_msg_len = 21 + strlen(first_arg->arg_name);
-							
-			char *err_msg = calloc(err_msg_len,sizeof(char));
-
-			snprintf(err_msg, err_msg_len, "Symbol %s not declared\n", t_ast->args_list->first_arg->arg_name);
-
-			error *e = new_error(err_msg, t_ast->ast_node_index);
-
-			add_new_error(err_list,e);
-
-		}
-
-	}else if( strncmp(first_arg->arg_type, "T_CONSTANT", 12) == 0){
-
-		input_function_code_gen(reg , first_arg->arg_name, asm_code, err_list, t_ast);
-
-	}
-
-}
-
-//output function call code generation
-void output_function_code_gen(char *value, char *second_arg, code *asm_code, error_list *err_list, ast *t_ast){
-
-	if(strncmp(second_arg,"HIGH", 4) == 0){
-
-		if(strncmp(value,"13", 2) == 0){
-
-			strncat(asm_code->asm_setup_code,"\tsbi DDRB, 5\n", 14);
-			strncat(asm_code->asm_main_code, "\tsbi PortB, 5\n", 15);
-				
-		}else if(strncmp(value,"12", 2) == 0){
-								
-			strncat(asm_code->asm_setup_code,"\tsbi DDRB, 4\n", 14);
-			strncat(asm_code->asm_main_code, "\tsbi PortB, 4\n", 15);
-
-		}else if(strncmp(value,"11", 2) == 0){
-
-			strncat(asm_code->asm_setup_code,"\tsbi DDRB, 3\n", 14);
-			strncat(asm_code->asm_main_code, "\tsbi PortB, 3\n", 15);
-
-		}else if(strncmp(value,"10", 2) == 0){
-								
-			strncat(asm_code->asm_setup_code,"\tsbi DDRB, 2\n", 14);
-			strncat(asm_code->asm_main_code, "\tsbi PortB, 2\n", 15);
-
-								
-		}else if(strncmp(value,"9", 1) == 0){
-
-			strncat(asm_code->asm_setup_code,"\tsbi DDRB, 1\n", 14);
-			strncat(asm_code->asm_main_code, "\tsbi PortB, 1\n", 15);
-
-		}else if(strncmp(value,"8", 1) == 0){
-
-			strncat(asm_code->asm_setup_code,"\tsbi DDRB, 0\n", 14);
-			strncat(asm_code->asm_main_code, "\tsbi PortB, 0\n", 15);
-
-		}else if(strncmp(value,"7", 1) == 0){
-
-			strncat(asm_code->asm_setup_code,"\tsbi DDRD, 7\n", 14);
-			strncat(asm_code->asm_main_code, "\tsbi PortD, 7\n", 15);
-
-		}else if(strncmp(value,"6", 1) == 0){
-
-			strncat(asm_code->asm_setup_code,"\tsbi DDRD, 6\n", 14);
-			strncat(asm_code->asm_main_code, "\tsbi PortD, 6\n", 15);
-
-		}else if(strncmp(value,"5", 1) == 0){
-
-			strncat(asm_code->asm_setup_code,"\tsbi DDRD, 5\n", 14);
-			strncat(asm_code->asm_main_code, "\tsbi PortD, 5\n", 15);
-
-		}else if(strncmp(value,"4", 1) == 0){
-
-			strncat(asm_code->asm_setup_code,"\tsbi DDRD, 4\n", 14);
-			strncat(asm_code->asm_main_code, "\tsbi PortD, 4\n", 15);
-
-		}else if(strncmp(value,"3", 1) == 0){
-
-			strncat(asm_code->asm_setup_code,"\tsbi DDRD, 3\n", 14);
-			strncat(asm_code->asm_main_code, "\tsbi PortD, 3\n", 15);
-
-		}else if(strncmp(value,"2", 1) == 0){
-
-			strncat(asm_code->asm_setup_code,"\tsbi DDRD, 2\n", 14);
-			strncat(asm_code->asm_main_code, "\tsbi PortD, 2\n", 15);
-
-		}else if(strncmp(value,"1", 1) == 0){
-
-			strncat(asm_code->asm_setup_code,"\tsbi DDRD, 1\n", 14);
-			strncat(asm_code->asm_main_code, "\tsbi PortD, 1\n", 15);
-
-		}else if(strncmp(value,"0", 1) == 0){
-
-			strncat(asm_code->asm_setup_code,"\tsbi DDRD, 0\n", 14);
-			strncat(asm_code->asm_main_code, "\tsbi PortD, 0\n", 15);
-
-		}else{
-									
-			char *err_msg = calloc(1,sizeof(char));
-
-			size_t err_msg_len = 31 + strlen(value);
-
-			snprintf(err_msg, err_msg_len, "Pin %s not present in atmega328p\n", value);
-
-			error *e = new_error(err_msg, t_ast->ast_node_index);
-
-			add_new_error(err_list,e);
-
-		}
-							
-	}else if(strncmp(second_arg,"LOW", 3) == 0){
-
-		//implement LOW
-							
-		if(strncmp(value,"13", 2) == 0){
-
-			strncat(asm_code->asm_main_code, "\tcbi PortB, 5\n", 15);
-				
-		}else if(strncmp(value,"12", 2) == 0){
-								
-			strncat(asm_code->asm_main_code, "\tcbi PortB, 4\n", 15);
-
-		}else if(strncmp(value,"11", 2) == 0){
-
-			strncat(asm_code->asm_main_code, "\tcbi PortB, 3\n", 15);
-
-		}else if(strncmp(value,"10", 2) == 0){
-								
-			strncat(asm_code->asm_main_code, "\tcbi PortB, 2\n", 15);
-								
-		}else if(strncmp(value,"9", 1) == 0){
-
-			strncat(asm_code->asm_main_code, "\tcbi PortB, 1\n", 15);
-
-		}else if(strncmp(value,"8", 1) == 0){
-
-			strncat(asm_code->asm_main_code, "\tcbi PortB, 0\n", 15);
-
-		}else if(strncmp(value,"7", 1) == 0){
-
-			strncat(asm_code->asm_main_code, "\tcbi PortD, 7\n", 15);
-
-		}else if(strncmp(value,"6", 1) == 0){
-
-			strncat(asm_code->asm_main_code, "\tcbi PortD, 6\n", 15);
-
-		}else if(strncmp(value,"5", 1) == 0){
-
-			strncat(asm_code->asm_main_code, "\tcbi PortD, 5\n", 15);
-
-		}else if(strncmp(value,"4", 1) == 0){
-
-			strncat(asm_code->asm_main_code, "\tcbi PortD, 4\n", 15);
-
-		}else if(strncmp(value,"3", 1) == 0){
-
-			strncat(asm_code->asm_main_code, "\tcbi PortD, 3\n", 15);
-
-		}else if(strncmp(value,"2", 1) == 0){
-
-			strncat(asm_code->asm_main_code, "\tcbi PortD, 2\n", 15);
-
-		}else if(strncmp(value,"1", 1) == 0){
-
-			strncat(asm_code->asm_main_code, "\tcbi PortD, 1\n", 15);
-
-		}else if(strncmp(value,"0", 1) == 0){
-
-			strncat(asm_code->asm_main_code, "\tcbi PortD, 0\n", 15);
-
-		}else{
-									
-			char *err_msg = calloc(1,sizeof(char));
-
-			size_t err_msg_len = 31 + strlen(value);
-
-			snprintf(err_msg, err_msg_len, "Pin %s not present in atmega328p\n", value);
-
-			error *e = new_error(err_msg, t_ast->ast_node_index);
-
-			add_new_error(err_list,e);
-
-		}
-								
-	}
-}
-
-//evaluate output function call
-void visitor_evaluate_output_function_call( ast *t_ast, error_list *err_list, code *asm_code, symbol_table *table){
-
-	function_args *first_arg = t_ast->args_list->first_arg;
-	function_args *second_arg = t_ast->args_list->last_arg;
-
-	if( strncmp(first_arg->arg_type, "T_IDENTIFIER", 12) == 0 ){
-
-		symbol *s = search_symbol(table, first_arg->arg_name);
-
-		if( s != NULL ){
-
-			output_function_code_gen(s->value, second_arg->arg_name, asm_code, err_list, t_ast);
-
-		}else{
-
-			//variable not present error
-	
-			size_t err_msg_len = 21 + strlen(first_arg->arg_name);
-								
-			char *err_msg = calloc(err_msg_len,sizeof(char));
-
-			snprintf(err_msg, err_msg_len, "Symbol %s not declared\n", t_ast->args_list->first_arg->arg_name);
-
-			error *e = new_error(err_msg, t_ast->ast_node_index);
-
-			add_new_error(err_list,e);
-
-		}
-
-	}else if( strncmp(first_arg->arg_type,"T_CONSTANT", 10) == 0 ){
-
-		output_function_code_gen(first_arg->arg_name, second_arg->arg_name, asm_code, err_list, t_ast);
-
-	}else if( strncmp(first_arg->arg_type, "T_KEYWORD", 9) == 0 ){
-
-		if( strncmp(first_arg->arg_name,"serial", 6) == 0 ){
-
-			if( strncmp(second_arg->arg_type, "T_CONSTANT", 10) == 0 ||
-				strncmp(second_arg->arg_type, "T_STRING", 8) == 0 ){
-
-				//implement for constant or string value
-
-
-			}else if( strncmp(second_arg->arg_type, "T_IDENTIFIER", 12) == 0){
-
-				symbol *s = search_symbol(table, second_arg->arg_name);
-
-				if(s != NULL){
-
-					//implement for identifier
-
-
-				}else{
-
-					//error
-
-
-				}
-
-
-			}
-
-
-		}else{
-
-			//error
-
-		}
-	}
-}
-
-//wait function call code generation
-void wait_function_code_gen(char *value, code *asm_code, error_list *err_list, ast *t_ast){
-
-
-	//wait
+				FLAG = 1;
 			
-	if(delay_code_flag == 0){
-	
-		char *reg = use_register(register_list);
-
-		char *delay_counter = use_register(register_list);
-
-		char *temp = use_register(register_list);
-
-		sprintf(asm_code->code_init,  ".def overflow_counter = %s\n"
-						 			  ".def delay_count = %s\n\n"
-									  ".def temp = %s\n"
-									  ".org 0x0000\n"
-									  "rjmp reset\n\n"
-									  ".org 0x0020\n"
-        							  "rjmp overflow_handler\n", reg, delay_counter, temp);
-
-		asm_code->reset_code = "\n\nreset:\n" 
-					 "\tldi temp, 0b00000101\n"
-					 "\tout TCCR0B, temp				;prescaling to 1024\n"
-					 "\tldi temp, 0b00000001\n"
-					 "\tsts TIMSK0, temp				;enabling timer interrupt\n"
-					 "\tsei								;enabling global interrupt\n";
-
-		asm_code->delay_function = calloc(200, sizeof(char));
-					
-		asm_code->delay_function = "\n\ndelay:\n"
-						 "\tclr overflow_counter\n"
-						 "\tsec_count:\n"
-						 "\t\tcp overflow_counter, delay_count\n"
-						 "\tbrne sec_count\n"
-						 "\tret\n";
-						
-					//timer_overflow_handler = calloc(20, sizeof(char));
-
-		asm_code->timer_overflow_handler = "\n\noverflow_handler:\n"
-									     "\tinc overflow_counter\n"
-										 "\tcpi overflow_counter, 61\n"
-										 "\tbrne PC+2\n"
-										 "\tclr overflow_counter\n"
-										 "\treti\n";
-
-		delay_code_flag = 1;
-
-	}
-
-	if( isdigit(*value) ){
-
-		int delay_time = atoi(value);
-						
-		if(delay_time <= 1000){
-							
-			int calc_delay = (delay_time * 60)/1000;
-
-			char *temp_code = calloc(10, sizeof(char));
-
-			sprintf(temp_code,"\tldi delay_count, %d\n", calc_delay);
-			strncat(asm_code->asm_main_code, temp_code, strlen(temp_code));
-			free(temp_code);
-			strncat(asm_code->asm_main_code,"\trcall delay\n",14);
-					
-		}else{
-
-			int calc_delay = (delay_time * 60)/1000;
-							
-			int calc_delay_count =(int)calc_delay/60;
-
-			strncat(asm_code->asm_main_code,"\tldi delay_count, 60\n", 22);
-			for(int i = 0;i < calc_delay_count;i++){	
-				strncat(asm_code->asm_main_code,"\trcall delay\n", 14);		
-			}
-	
-		}
-
-	}else{
-
-		size_t err_msg_len = 29 + strlen(value);
-
-		char *err_msg = calloc(err_msg_len,sizeof(char));
-
-		snprintf(err_msg, err_msg_len, "%s is not valid wait parameter\n",value);
-
-		error *e = new_error(err_msg, t_ast->ast_node_index);
-
-		add_new_error(err_list,e);
-
-	}
-
-}
-
-//evaluate wait function call
-void visitor_evaluate_wait_function_call( ast *t_ast, error_list *err_list, code *asm_code, symbol_table *table){
-
-	function_args *first_arg = t_ast->args_list->first_arg;
-
-	if( strncmp(first_arg->arg_type, "T_CONSTANT", 10) == 0 ){
-
-		wait_function_code_gen(first_arg->arg_name, asm_code, err_list, t_ast);
-
-	}else if( strncmp(first_arg->arg_type, "T_IDENTIFIER", 12) == 0 ){
-
-		symbol *s = search_symbol(table, first_arg->arg_name);
-
-		if( s != NULL ){
-
-			wait_function_code_gen(s->value, asm_code, err_list, t_ast);
-
-		}else{
-		
-			size_t err_msg_len = 21 + strlen(first_arg->arg_name);
-
-			char *err_msg = calloc(err_msg_len,sizeof(char));
-
-			snprintf(err_msg, err_msg_len, "Symbol %s not declared\n", first_arg->arg_name);
-
-			error *e = new_error(err_msg, t_ast->ast_node_index);
-
-			add_new_error(err_list,e);
-	
-		}
-
-	}
-
-}
-
-//evaluate function calls
-void visitor_evaluate_function_call(ast *t_ast, error_list *err_list, code *asm_code, symbol_table *table){
-
-	if(is_builtin_function(t_ast->function_name) == 1){
-
-		if(strncmp(t_ast->function_name,"output",6) == 0){
-
-			visitor_evaluate_output_function_call(t_ast, err_list, asm_code, table);
-
-		}else if(strncmp(t_ast->function_name,"wait",4) == 0){
-
-			//wait
-
-			visitor_evaluate_wait_function_call(t_ast, err_list, asm_code, table);
-
-		}else if( strncmp(t_ast->function_name, "input", 6) == 0){
-
-			//input
-			visitor_evaluate_input_funtion_call("NA", t_ast, err_list, asm_code, table);
-
-		}
-
-	}//user defined function call
-
-}
-
-//create new code structure
-code* new_asm_code(){
-
-	code *c = calloc(1, sizeof(code));
-	c->asm_main_code = NULL;
-	c->asm_setup_code = NULL;
-	c->code_init = NULL;
-	c->delay_function = NULL;
-	c->reset_code = NULL;
-	c->serial_output_function = NULL;
-	c->timer_overflow_handler = NULL;
-	c->DSEG = NULL;
-
-	c->DSEG_FLAG = 0;
-
-	return c;
-
-}
-
-//visitor
-void visitor_evaluate(ast_l *ast_list, error_list* err_list){
-
-	symbol_table *table = new_symbol_table();
-
-	symbol *s, *temp_s;
-
-	ast *t_ast = ast_list->root_node;
-
-	code *asm_code = new_asm_code();
-
-	asm_code->code_init = calloc(200, sizeof(char));
-	asm_code->asm_setup_code = calloc(1000, sizeof(char));
-	asm_code->asm_main_code = calloc(2000, sizeof(char));
-	asm_code->reset_code = calloc(200, sizeof(char));
-	asm_code->delay_function = NULL;
-	asm_code->timer_overflow_handler = calloc(200, sizeof(char));
-	asm_code->serial_output_function = NULL;
-	asm_code->DSEG = calloc(300 , sizeof(char));
-
-	while(t_ast != NULL){
-
-		if( strncmp(t_ast->type, "AST_VAR_DEF_ASSIGNMENT_FUNCTION", 31) == 0){
-
-
-			temp_s = search_symbol(table, t_ast->var_def_var_name);
-
-			if(temp_s == NULL){
-
-				char *temp_code = calloc(100, sizeof(char));
-
-				sprintf(temp_code,
-						"\t%s: .BYTE 1\n",
-						t_ast->var_def_var_name);
-
-				strncat(asm_code->DSEG, temp_code, strlen(temp_code));
-
-				asm_code->DSEG_FLAG = 1;
-
-				add_new_symbol(table, new_var_symbol(t_ast->var_def_var_name,t_ast->var_def_var_name, "DSEG_VAR"));
-
-				visitor_evaluate_input_funtion_call(t_ast->var_def_var_name, t_ast, err_list, asm_code, table);
-
-			}else{
-
-				size_t err_msg_len = strlen(t_ast->var_def_var_name) + ERR_MSG_VAR_PRESENT_LEN;
-
-				char *err_msg = calloc(err_msg_len, sizeof(char));
-
-				snprintf(err_msg, err_msg_len,
-						 "variable %s is already declared\n",
-						 t_ast->var_def_var_name);
-
-				add_new_error(err_list, new_error(err_msg, t_ast->ast_node_index));
-
-			}
-
-		}else if( strncmp(t_ast->type, "AST_VAR_DEF_ASSIGNMENT", 22) == 0){
-
-			temp_s = search_symbol(table, t_ast->var_def_var_name);
-
-			//checking if the give variable name is present or not
-			//else raise an error
-
-			if(temp_s == NULL){
-
-				/*                IMPLEMENTING EXPRESSION EVAL                */
-
-				token_list* list = t_ast->var_def_var_expr;
-
-				int FLAG = 0;
-				int *STRING_FLAG = &FLAG;
-
-				if( is_DSEG(list, table) == 1 ){
-
-					/******************************************/
-					/*     ADD VARIABLE NOT PRESENT ERROR	  */
-					/******************************************/
-
-					char *temp_expr = calloc(100, sizeof(char));
-					
-					//check for undeclared variables
-					
-					if( is_undeclared_var_present(list, table, err_list) == 1 )	
-
-
-//					print_token_list(list);
-
-					token_list* infix = postfix_to_infix(list);
-
-					token *t = infix->first_token;
-
-					/****************************/
-					/*raise string present error*/
-					/****************************/
-
-					strncat(temp_expr, "(", 2);
-
-					while(t != NULL){
-
-						if(strncmp(t->type, "T_IDENTIFIER", 12) == 0){
-
-							strncat(temp_expr,"$",2 );
-
-						}
-
-						strncat(temp_expr, t->content, strlen(t->content));
-
-						t = t->next_token;
-
-					}
-
-					strncat(temp_expr, ")", 2);
-
-					char *temp_reg = use_register(register_list);
-
-					char *temp_code = calloc(100, sizeof(char));
-					
-					//declaring variable in asm
-					sprintf(temp_code,
-							"\t%s: .BYTE 1\n",
-							t_ast->var_def_var_name);
-
-					strncat(asm_code->DSEG, temp_code, strlen(temp_code));
-
-					asm_code->DSEG_FLAG = 1;
-
-					//defining variable
-					free(temp_code);
-
-					temp_code = calloc(100, sizeof(char));
-
-					sprintf(temp_code, 
-							"\tldi %s, %s\n"
-							"\tsts %s, %s\n",
-							temp_reg, temp_expr, t_ast->var_def_var_name, temp_reg);
-
-					strncat(asm_code->asm_main_code, temp_code, strlen(temp_code));
-
-					//updating symbol table
-					symbol *s = new_var_symbol( t_ast->var_def_var_name,
-												t_ast->var_def_var_name,
-												"DSEG_VAR");
-
-					add_new_symbol(table, s);
-
-					free(temp_expr);
-					free(temp_code);
-
-				}else{
-
-					char* answer = evaluate_expression_ast(list, err_list, table, t_ast->ast_node_index, STRING_FLAG);
-
-					if(answer != NULL){
-
-						printf("ans = %s \n",  answer);
-
-						if(*STRING_FLAG == 0){
-
-							char *temp_code = calloc(100, sizeof(char));
-					
-							//declaring variable in asm
-							sprintf(temp_code,
-									"\t%s: .BYTE 1\n",
-									t_ast->var_def_var_name);
-
-							strncat(asm_code->DSEG, temp_code, strlen(temp_code));
-
-							asm_code->DSEG_FLAG = 1;
-
-							//defining variable in asm
-						
-							free(temp_code);
-	
-							temp_code = calloc(100, sizeof(char));
-
-							char *temp_reg = use_register(register_list);
-
-							sprintf(temp_code,
-									"\tldi %s, %s\n"
-									"\tsts %s, %s\n",
-									temp_reg, answer, t_ast->var_def_var_name, temp_reg);
-
-							strncat(asm_code->asm_main_code,temp_code, strlen(temp_code));
-				
-							//reuse the same register for another operation
-							register_index--;
-
-							free(temp_code);
-
-							s = new_var_symbol( t_ast->var_def_var_name,
-												answer,
-												"T_IDENTIFIER");
-
-						}else{
-					
-							s = new_var_symbol( t_ast->var_def_var_name,
-												answer,
-												"T_STRING");
-				
-						}
-
-						add_new_symbol(table, s);
-					
-					}
-
-				}
-			}else{
-
-				size_t err_msg_len = strlen(t_ast->var_def_var_name) + ERR_MSG_VAR_PRESENT_LEN;
-
-				char *err_msg = calloc(err_msg_len, sizeof(char));
-
-				snprintf(err_msg, err_msg_len,
-						 "variable %s is already declared\n",
-						 t_ast->var_def_var_name);
-
-				add_new_error(err_list, new_error(err_msg, t_ast->ast_node_index));
-
-			}
-			
-		}else if( strncmp(t_ast->type, "AST_VAR_DEF", 11) == 0 ){
-
-			temp_s = search_symbol(table, t_ast->var_def_var_name);
-
-			//checking if the give variable name is present or not
-			//else raise an error
-
-			if(temp_s == NULL){
-
-				/*                IMPLEMENTING EXPRESSION EVAL                */
-
-				char *temp_code = calloc(100, sizeof(char));
-					
-				//declaring variable in asm
-				sprintf(temp_code,
-						"\t%s: .BYTE 1\n",
-						t_ast->var_def_var_name);
-
-				strncat(asm_code->DSEG, temp_code, strlen(temp_code));
-
-				asm_code->DSEG_FLAG = 1;
-
-				s = new_var_symbol( t_ast->var_def_var_name,
-									"NA",
-									"NA");
-				
-				add_new_symbol(table, s);
-
-			}else{
-
-				size_t err_msg_len = strlen(t_ast->var_def_var_name) + ERR_MSG_VAR_PRESENT_LEN;
-
-				char *err_msg = calloc(err_msg_len, sizeof(char));
-
-				snprintf(err_msg, err_msg_len,
-						 "variable %s is already declared\n",
-						 t_ast->var_def_var_name);
-
-				add_new_error(err_list, new_error(err_msg, t_ast->ast_node_index));
-
-			}
-		
-		}else if( strncmp(t_ast->type, "AST_VAR_ASSIGNMENT_FUNCTION", 28) == 0 ){
-
-			temp_s = search_symbol(table, t_ast->var_name);
-
-			if( temp_s != NULL ){
-
-				char *temp_code = calloc(100, sizeof(char));
-
-				sprintf(temp_code,
-						"\t%s: .BYTE 1\n",
-						t_ast->var_name);
-
-				strncat(asm_code->DSEG, temp_code, strlen(temp_code));
-
-				asm_code->DSEG_FLAG = 1;
-
-				update_symbol(table, new_var_symbol(t_ast->var_name, t_ast->var_name, "DSEG_VAR"));
-
-				visitor_evaluate_input_funtion_call(t_ast->var_name, t_ast, err_list, asm_code, table);
-			
-			}else{
-
-				size_t err_msg_len = strlen(t_ast->var_name) + ERR_MSG_VAR_NOT_PRESENT_LEN;
+				size_t err_msg_len = strlen(t->content) + ERR_MSG_VAR_NOT_PRESENT_LEN;
 
 				char *err_msg = calloc(err_msg_len, sizeof(char));
 
 				snprintf(err_msg, err_msg_len,
 						 "variable %s is not declared\n",
-						 t_ast->var_name);
+						 t->content);
 
-				add_new_error(err_list, new_error(err_msg, t_ast->ast_node_index));
+				add_new_error(err_list, new_error(err_msg, ast_node_index));
 
+
+				break;
 			}
 
-
-		}else if( strncmp(t_ast->type, "AST_VAR_ASSIGNMENT", 18) == 0){
-
-			temp_s = search_symbol(table, t_ast->var_name);
-
-			//checking if the give variable name is present or not
-			//else raise an error
-
-			if(temp_s != NULL){
-
-				/*                IMPLEMENTING EXPRESSION EVAL                */
-
-				token_list* list = t_ast->var_expr;
-
-				int FLAG = 0;
-				int *STRING_FLAG = &FLAG;
-
-				if( is_DSEG(list, table) == 1 ){
-
-					/******************************************/
-					/*     ADD VARIABLE NOT PRESENT ERROR	  */
-					/******************************************/
-
-					char *temp_expr = calloc(100, sizeof(char));
-
-					print_token_list(list);
-
-					token_list* infix = postfix_to_infix(list);
-					token *t = infix->first_token;
-
-					/****************************/
-					/*raise string present error*/
-					/****************************/
-
-					strncat(temp_expr, "(", 2);
-
-					while(t != NULL){
-
-						if(strncmp(t->type, "T_IDENTIFIER", 12) == 0){
-
-							strncat(temp_expr,"$",2 );
-
-						}
-						
-						strncat(temp_expr, t->content, strlen(t->content));
-
-						t = t->next_token;
-
-					}
-
-					strncat(temp_expr, ")", 2);
-
-					char *temp_reg = use_register(register_list);
-
-					char *temp_code = calloc(100, sizeof(char));
-					
-					//defining variable
-					free(temp_code);
-
-					temp_code = calloc(100, sizeof(char));
-
-					sprintf(temp_code, 
-							"\tldi %s, %s\n"
-							"\tsts %s, %s\n",
-							temp_reg, temp_expr, t_ast->var_name, temp_reg);
-
-					//reuse register for other operations
-					register_index--;
-
-					strncat(asm_code->asm_main_code, temp_code, strlen(temp_code));
-
-					//updating symbol table
-					symbol *s = new_var_symbol( t_ast->var_name,
-												t_ast->var_name,
-												"DSEG_VAR");
-
-					update_symbol(table, s);
-
-					free(temp_expr);
-					free(temp_code);
-
-
-
-				}else{
-
-					char* answer = evaluate_expression_ast(list, err_list, table, t_ast->ast_node_index, STRING_FLAG);
-
-					if(answer != NULL){
-
-						printf("ans = %s \n",  answer);
-
-						if(*STRING_FLAG == 0){
-
-							//number
-							
-							char *temp_code = calloc(100, sizeof(char));
-
-							char *temp_reg = use_register(register_list);
-
-							sprintf(temp_code, 
-									"\tldi %s, %s\n"
-									"\tsts %s, %s\n",
-									temp_reg, answer, t_ast->var_name, temp_reg);
-
-							//reusing the register for other operations
-							register_index--;
-
-							strncat(asm_code->asm_main_code, temp_code, strlen(temp_code));
-
-							free(temp_code);
-
-							//updating the symbol table
-							temp_s->value = answer;
-
-							update_symbol( 	table,
-										 	temp_s);
-
-
-						}else{
-					
-							//string
-							temp_s->value = answer;
-	
-							update_symbol( 	table,
-										 	temp_s);
-
-						}
-
-					}
-
-				}
-			}else{
-
-				size_t err_msg_len = strlen(t_ast->var_name) + ERR_MSG_VAR_NOT_PRESENT_LEN;
-
-				char *err_msg = calloc(err_msg_len, sizeof(char));
-
-				snprintf(err_msg, err_msg_len,
-						 "variable %s is not declared\n",
-						 t_ast->var_name);
-
-				add_new_error(err_list, new_error(err_msg, t_ast->ast_node_index));
-
-			}
-
-		}else if( strncmp(t_ast->type,"AST_BUILTIN_FUNCTION_CALL",26) == 0 ){
-
-			visitor_evaluate_function_call(t_ast, err_list, asm_code, table);			
-
-		}//other asts
-
-		t_ast = t_ast->next_ast_node;
+		}
+		t = t->next_token;
 
 	}
 
-	if(err_list->error_index > 0){
-		print_errors(err_list);
-		exit(0);
-	}else{
+	return FLAG;
 
-		//printing symbol table for drbugging process only
-		fprintf(stdout, "\n SYMBOL TABLE \n");
-		print_symbol_table(table);
+}
 
-		FILE *f = fopen("./code.asm","w+");
+//checking if given expression is a simple expression or not
+int is_simple_expr(token_list *list){
 
-		fprintf(f,";**************************************************\n"
-				  ";*                                                *\n"
-				  ";*     THIS IS CODE GENERATED AUTOMATICALLY       *\n"
-				  ";*                 BY COMPILER                    *\n"
-				  ";*                                                *\n"
-				  ";**************************************************\n\n\n");
+	if(list->token_count == 3){
+		return 1;
+	}
 
-		fprintf(f,".include \"./m328Pdef.inc\"\n\n\n");
+	return 0;
 
-		if(asm_code->DSEG_FLAG == 1){
+}
 
-			fprintf(f,
-					";************************************\n"
-					";*             variables            *\n"
-					";************************************\n\n");
-			fprintf(f, ".DSEG\n");
-			fprintf(f, "%s", asm_code->DSEG);
-			fprintf(f, ".CSEG\n\n\n");
+//checking if there is any var defined inside asm
+int is_DSEG(token_list *list, symbol_table *table){
+
+	token *t = list->first_token;
+
+	int flag = 0;
+
+	while(t != NULL){
+
+		if( strncmp(t->type, "T_IDENTIFIER", 12) == 0){
+
+			symbol *s = search_symbol(table, t->content);
+
+			if(s != NULL){
+
+				if( strncmp(s->data_type, "DSEG_VAR", 8) == 0){
+
+					flag = 1;
+					break;
+
+				}
+
+			}
 
 		}
+	
+		t = t->next_token;
 
-		if(asm_code->delay_function != NULL){
-			fprintf(f,"%s", asm_code->code_init);
-			fprintf(f,"%s", asm_code->reset_code);
+	}
+
+	return flag;
+}
+
+//evaluate expression tree and return the answer
+char* evaluate_expression_ast(token_list *node, error_list *err_list, symbol_table *table , size_t line, int *STRING_FLAG){
+
+	if(node->token_count == 1){
+
+		if(string_present(node->first_token, table) == 1){
+			if(is_valid_string_expr(node->first_token) == 0){
+				*STRING_FLAG = 1;
+			}
 		}
 
-		fprintf(f,"\nsetup:\n");
+		return node->first_token->content;
 
-		fprintf(f,"%s", asm_code->asm_setup_code);
+	}
 
-		fprintf(f,"\n\n");
+	token *t = node->first_token;
 
-		fprintf(f, "main:\n");
+	char *answer = calloc(1, sizeof(char));
 
-		fprintf(f, "%s", asm_code->asm_main_code);
+	stack *STACK = new_stack();
 
-		fprintf(f,"\n\nend:\n");
+	//check if the exporession has a string value
 
-		fprintf(f, "\trjmp end\n");
+	if(string_present(t, table) == 1){
+
+		//checking if the string only has + or T_PLUS operator
+
+		if(is_valid_string_expr(t) == 0){
+
+			*STRING_FLAG = 1;
+
+			while( t != NULL ){
+				
+				if( strncmp(t->type, "T_CONSTANT", 10) == 0 ||
+					strncmp(t->type, "T_STRING", 7) == 0){
+
+					push(STACK, t);
+
+				}else if( strncmp(t->type, "T_IDENTIFIER", 12) == 0 ){
+
+					symbol *temp = search_symbol(table, t->content);
+
+					if(temp != NULL){
+
+						push(STACK, t);
+
+					}else{
+
+						size_t err_msg_len = strlen(t->content) + ERR_MSG_VAR_NOT_PRESENT_LEN;
+
+						char *err_msg = calloc(err_msg_len, sizeof(char));
+
+						snprintf(err_msg, err_msg_len,
+								 "variable %s is not declared\n",
+								 t->content);
+
+						add_new_error(err_list, new_error(err_msg, line));
+
+
+						return NULL;
+					}
+
+				}else{
+
+					//add all the string
+
+					char *answer, *left_operand, *right_operand;
+
+					token *left = pop(STACK);
+					token *right = pop(STACK);
+
+					if(  strncmp(left->type, "T_IDENTIFIER", 12) == 0 || 
+					 	strncmp(right->type, "T_IDENTIFIER", 12) == 0){
+
+						if( strncmp(left->type, "T_IDENTIFIER", 12) == 0 &&
+							strncmp(right->type, "T_IDENTIFIER", 12) != 0){
+				
+							symbol *s = search_symbol(table, left->content);
+							left_operand = s->value;
+							right_operand = right->content;
+
+						}else if( strncmp(right->type, "T_IDENTIFIER", 12) == 0 &&
+						  	      strncmp(left->type, "T_IDENTIFIER", 12) != 0){
+
+							symbol *s = search_symbol(table, right->content);
+							right_operand = s->value;
+							left_operand = left->content;
+
+						}else{
+
+							symbol *l = search_symbol(table, left->content);
+							symbol *r = search_symbol(table, right->content);
+	
+							left_operand = l->value;
+							right_operand = r->value;
+
+						}
  
-		if(asm_code->delay_function != NULL){
-			fprintf(f,"%s",asm_code->delay_function);
-			fprintf(f,"%s", asm_code->timer_overflow_handler);
+					}else{
+
+						left_operand = left->content;
+						right_operand = right->content;
+
+					}
+
+					if( strncmp(t->type, "T_PLUS", 6 ) == 0){
+
+						answer = calloc( strlen(left_operand) + strlen(right_operand), sizeof(char));
+
+						snprintf(answer, strlen(left_operand) + strlen(right_operand) + 1,
+										"%s%s",
+										left_operand,
+										right_operand);
+
+						push(STACK, new_token("T_STRING", answer));
+
+					}
+
+				}						
+
+				t = t->next_token;
+
+			}
+
+
+			return STACK->top->content;
+
+		}else{
+
+			error *e = new_error("Invalid expression", line);
+
+			add_new_error(err_list, e);
+
+			return NULL;
+
 		}
 
-		fclose(f);
 
-		free(asm_code->asm_setup_code);
+	}else{
 
-		free(asm_code->asm_main_code);
+		while( t != NULL ){
 
-		free(asm_code->code_init);
-		
-		//free(reset_code);
+			if( strncmp(t->type, "T_CONSTANT", 10) == 0 ){
 
-		//free(timer_overflow_handler);
+				push(STACK, t);
+
+			}else if( strncmp(t->type, "T_IDENTIFIER", 12) == 0 ){
+
+				symbol *temp = search_symbol(table, t->content);
+
+				if(temp != NULL){
+
+					push(STACK, t);
+
+				}else{
 
 
-	//		free(delay_function);
+					size_t err_msg_len = strlen(t->content) + ERR_MSG_VAR_NOT_PRESENT_LEN;
+
+					char *err_msg = calloc(err_msg_len, sizeof(char));
+
+					snprintf(err_msg, err_msg_len,
+							 "variable %s is not declared\n",
+							 t->content);
+
+					add_new_error(err_list, new_error(err_msg, line));
+
+
+					return NULL;
+				}
+
+			}else{
+
+				token *left = pop(STACK);
+				token *right = pop(STACK);
+
+				int left_operand, right_operand;
+
+				if(  strncmp(left->type, "T_IDENTIFIER", 12) == 0 || 
+					 strncmp(right->type, "T_IDENTIFIER", 12) == 0){
+
+					if( strncmp(left->type, "T_IDENTIFIER", 12) == 0 &&
+						strncmp(right->type, "T_IDENTIFIER", 12) != 0){
+				
+						symbol *s = search_symbol(table, left->content);
+						left_operand = atoi(s->value);
+						right_operand = atoi(right->content);
+
+					}else if( strncmp(right->type, "T_IDENTIFIER", 12) == 0 &&
+					  	      strncmp(left->type, "T_IDENTIFIER", 12) != 0){
+
+						symbol *s = search_symbol(table, right->content);
+						right_operand = atoi(s->value);
+						left_operand = atoi(left->content);
+
+					}else{
+
+						symbol *l = search_symbol(table, left->content);
+						symbol *r = search_symbol(table, right->content);
+
+						left_operand = atoi(l->value);
+						right_operand = atoi(r->value);
+
+					}
+ 
+				}else{
+
+					left_operand = atoi(left->content);
+					right_operand = atoi(right->content);
+
+				}
+
+			
+				if( strncmp(t->type, "T_PLUS", 6) == 0 ){
+
+					sprintf(answer,"%d", left_operand + right_operand);
+					push(STACK, new_token("T_CONSTANT", answer));
+
+				}else if( strncmp(t->type, "T_MINUS", 7) == 0 ){
+
+					sprintf(answer,"%d", right_operand - left_operand);
+					push(STACK, new_token("T_CONSTANT", answer));
+
+				}else if( strncmp(t->type, "T_ASTERIX", 9) == 0 ){
+
+					sprintf(answer,"%d", left_operand * right_operand);
+					push(STACK, new_token("T_CONSTANT", answer));
+
+				}else if( strncmp(t->type,"T_FSLASH", 8) == 0 ){
+
+					sprintf(answer,"%d", right_operand / left_operand);
+					push(STACK, new_token("T_CONSTANT", answer));
+				}
+			}
+
+			t = t->next_token;
+
+		}
+
+	}
+	return STACK->top->content;
+
+}
+
+//evaluate expression tree and return the answer
+char* evaluate_predetermined_logical_expression(token_list *node, error_list *err_list, symbol_table *table , size_t line, int *STRING_FLAG){
+
+	token *t = node->first_token;
+
+//	char *answer = calloc(1, sizeof(char));
+
+	stack *STACK = new_stack();
+
+	while( t != NULL){
+
+		if( is_logical_operator(t) != 1 ){
+
+			//operand
+
+			push(STACK, t);
+
+		}else{
+
+			token *left_operand = pop(STACK);	
+			token *right_operand = pop(STACK);	
+
+			if( strncmp(left_operand->type, "T_IDENTIFIER", 12 ) == 0 ||
+				strncmp(right_operand->type, "T_IDENTIFIER", 12 ) == 0){
+
+				if(	strncmp(left_operand->type, "T_IDENTIFIER", 12 ) == 0 &&
+					strncmp(right_operand->type, "T_IDENTIFIER", 12 ) != 0){
+
+					//left operand is an identifier
+					
+				}else if(
+					strncmp(left_operand->type, "T_IDENTIFIER", 12 ) != 0 &&
+					strncmp(right_operand->type, "T_IDENTIFIER", 12 ) == 0){
+				
+					//right operand is an identifier
+				
+				}else{
+				
+					//both operands are identifier
+
+
+
+				}
+			}
+
+			symbol *left_operand_symbol = search_symbol(table, left_operand->content);
+			symbol *right_operand_symbol = search_symbol(table, right_operand->content);
+
+			if( left_operand_symbol != NULL && right_operand_symbol != NULL ){
+
+				
+
+			}else{
+
+				//raise error
+
+				if( left_operand_symbol == NULL && right_operand_symbol != NULL ){
+
+					//left operator undeclared error
+
+				}else if( left_operand_symbol != NULL && right_operand_symbol == NULL ){
+
+					//right opertator undeclared error
+
+				}else{
+
+					//both operator undeclared error
+
+				}
+
+			}
+
+		}
+
+		t = t->next_token;
 
 	}
 
 }
 
+//evaluate expression tree and return the answer
+char* evaluate_logical_expression(token_list *node, error_list *err_list, symbol_table *table , size_t line, int *STRING_FLAG);
 
+
+//check precedence of operator
+int check_precedence(token *t){
+
+	/*if(
+		strncmp(t->type, "T_LPAREN", 8) == 0 ||
+		strncmp(t->type, "T_RPAREN", 8) == 0
+	  ){
+		return 11;
+	}else*/ if(
+		strncmp(t->type,"T_LNOT", 6) == 0
+	  ){
+		return 10;
+	}else if(	
+		strncmp(t->type, "T_ASTERIX", 9) == 0 ||
+		strncmp(t->type, "T_FSLASH", 8) == 0 ||
+		strncmp(t->type, "T_MOD", 5) == 0 
+	  ){
+		return 9;
+	}else if(
+		strncmp(t->type, "T_PLUS", 6) == 0 ||
+		strncmp(t->type, "T_MINUS", 7) == 0
+		){
+		return 8;
+	}else if(
+		strncmp(t->type,"T_LE", 4) == 0 ||
+		strncmp(t->type,"T_GE", 4) == 0 ||
+		strncmp(t->type,"T_GREATER", 9) == 0 ||
+		strncmp(t->type,"T_LESSER", 8) == 0 
+		){
+
+		return 7;
+
+	}else if(
+		strncmp(t->type,"T_EE", 4) == 0 ||
+		strncmp(t->type,"T_NE", 4) == 0
+		){
+		return 6;
+	}else if(
+		strncmp(t->type,"T_BAND", 6) == 0
+		){
+		return 5;
+	}else if(
+		strncmp(t->type,"T_BOR", 5) == 0
+		){
+		return 4;
+	}else if(
+		strncmp(t->type,"T_LAND", 6) == 0
+		){
+		return 3;
+	}else if(
+		strncmp(t->type,"T_LOR", 5) == 0
+		){
+		return 2; 
+	}else{
+		return 1;
+	}
+
+}
+
+//infix to prefix
+token_list* infix_to_postfix(token_list *list){
+
+	//reverse_token_list(list);
+
+	token *temp = new_token("T_LPAREN", "(");
+
+	temp->next_token = list->first_token;
+	list->first_token->prev_token = temp;
+	list->first_token = temp;
+
+	temp = new_token("T_RPAREN", ")");
+
+	list->last_token->next_token = temp;
+	temp->prev_token = list->last_token;
+	list->last_token = temp;
+
+	token *t = list->first_token;
+
+	token_list *postfix_expression = new_token_list();
+
+	stack *STACK = new_stack();
+
+	//infix to postfix
+
+	while( t != NULL ){
+
+		if( strncmp(t->type,"T_CONSTANT",11) == 0 ||
+			strncmp(t->type,"T_IDENTIFIER", 12) == 0 ||
+			strncmp(t->type,"T_STRING", 8) == 0){
+
+			add_new_token(postfix_expression, new_token(t->type, t->content));
+
+		}else if( strncmp(t->type,"T_LPAREN", 8) == 0 ){
+
+			push(STACK, t);		
+
+		}else if( strncmp(t->type,"T_RPAREN", 8) == 0 ){
+
+			while( strncmp( get_stack_top(STACK)->type,"T_LPAREN",8) != 0){
+
+				add_new_token(postfix_expression, new_token(get_stack_top(STACK)->type, get_stack_top(STACK)->content));
+				pop(STACK);
+
+			}
+
+			pop(STACK);
+
+		}else{
+			if( is_operator(t) == 1 || is_logical_operator(t) == 1 ){
+
+				while( check_precedence(t) <= check_precedence(get_stack_top(STACK)) ){
+
+					add_new_token(postfix_expression, get_stack_top(STACK));
+					pop(STACK);
+
+				}
+
+				push(STACK, t);
+
+			}
+		}
+
+		t = t->next_token;
+	}
+		
+	free(STACK);
+
+	return postfix_expression;
+
+}
+
+//postfix to infix
+token_list* postfix_to_infix(token_list *list){
+
+	char *infix_expr;
+
+	token *t = list->first_token;
+
+	stack *s = new_stack();
+
+	while( t != NULL ){
+
+		//check if given operatort is an operand
+		if( is_operator(t) == 0 ){
+
+			//if it is an operand push it ot stack
+			push(s, t);
+
+		}else{
+
+/*
+			if(counter > 0){
+
+			token *r = pop(s);
+			token *l = pop(s);
+
+			right = new_token(r->type, r->content);
+			left = new_token(l->type, l->content);
+			op = new_token(t->type, t->content);
+
+			}else{
+
+				right = pop(s);		
+				left = pop(s);		
+			op = new_token(t->type, t->content);
+
+			}
+
+			//right->next_token = r->next_token;
+
+			if(counter == 0){
+
+				right->next_token = NULL;
+
+			}
+
+			left->next_token = op;
+			op->prev_token = left;
+			op->next_token = right;
+			right->prev_token = op;
+
+			push(s, left);
+*/
+
+			token *right = pop(s);
+			token *left = pop(s);
+
+			infix_expr = calloc(list->token_count, sizeof(char));
+
+			strncat(infix_expr, left->content, strlen(left->content));
+			strncat(infix_expr, " ", 2);
+			strncat(infix_expr, t->content, strlen(t->content));
+			strncat(infix_expr, " ", 2);
+			strncat(infix_expr, right->content, strlen(right->content));
+			strncat(infix_expr, " ", 2);
+
+			token *temp = new_token("T_EXPR", infix_expr);
+
+
+			push(s,temp);
+
+
+		}
+
+		t = t->next_token;
+
+	}
+
+	//printf("%s ", infix_expr);
+
+	//printf("\n");
+	return str_to_token_list(infix_expr);
+
+}
+
+//check if postfix expression is valid or not
+int is_postfix_valid(token_list* list){
+
+	if(list->token_count == 1){
+
+		return 1;
+
+	}
+
+	int operand_count = 0, operator_count = 0;
+	
+	token *t = list->first_token;
+
+	while(t != NULL){
+
+		if( is_operator(t) == 1 || is_logical_operator(t) == 1 ){
+
+			operator_count++;
+
+		}else{
+
+			operand_count++;
+
+		}
+
+		t = t->next_token;
+
+	}
+
+	//postfix expression validation
+	//1 -> first two elements are operand
+	//2 -> last element is always an operator
+	//3 -> for every n operands there are n-1 operators
+
+	if( 
+		is_operator(list->first_token) == 0 &&
+		is_operator(list->first_token->next_token) == 0 &&
+		operand_count == operator_count+1 &&
+		is_operator(list->last_token) == 1
+	  ){
+
+		return 1;
+
+	}
+	
+	return 0;
+	
+}
+
+//get identifer from string list
+//char* get_identifier_from_string(char *expr,){
+
+
+
+//}
+
+//convert string to token list
+token_list* str_to_token_list(char *expr){
+
+	token_list* list = new_token_list();
+
+	for(size_t i = 0; i < strlen(expr); i++){
+
+		if( isalnum(expr[i]) ){
+	
+			char *identifier = calloc(1,sizeof(char));
+	
+			int j = 0;
+
+			while( isalnum(expr[i]) ){
+
+				identifier = realloc(identifier, j + sizeof(char));
+        		identifier[j] = expr[i];
+        		j++;
+      			i++;
+
+			}
+
+			if( isdigit(*identifier)){
+			
+				add_new_token(list, new_token("T_CONSTANT", identifier));
+			
+			}else{
+
+				add_new_token(list, new_token("T_IDENTIFIER", identifier));
+
+			}
+		}
+
+		if(expr[i] == ' '){
+			continue;
+		}
+
+		if(expr[i] == '+'){
+
+			add_new_token(list, new_token("T_PLUS", "+"));
+
+		}else if(expr[i] == '-'){
+
+			add_new_token(list, new_token("T_MINUS", "-"));
+
+		}else if(expr[i] == '*'){
+
+			add_new_token(list, new_token("T_ASTERIX", "*"));
+
+		}else if(expr[i] == '/'){
+
+			add_new_token(list, new_token("T_FSLASH", "/"));
+
+		}
+
+	}
+
+	return list;
+
+}
+
+//print token list
+void print_token_list(token_list *list){
+
+	token *t = list->first_token;
+
+	while(t != NULL){
+		fprintf(stdout,"content->%s, type->%s\n", t->content, t->type);
+		t = t->next_token;
+	}
+
+}
