@@ -101,15 +101,13 @@ symbol* search_symbol(symbol_table *table, char *name){
 
 	int search_flag = false;
 	
-	size_t len = strlen(name);
-
 	symbol *temp = table->first_symbol;
 
 	symbol *ret_symbol = calloc(1, sizeof(symbol));
 
 	while(temp != NULL){
 
-		if(strncmp(temp->name, name, len) == 0){
+		if(strcmp(temp->name, name) == 0){
 
 			ret_symbol->name = temp->name;
 			ret_symbol->type = temp->type;

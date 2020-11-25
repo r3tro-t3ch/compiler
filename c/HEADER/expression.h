@@ -80,10 +80,10 @@ int is_simple_expr(token_list *list);
 int is_DSEG(token_list *t, symbol_table *table);
 
 //evaluate expression tree and return the answer
-char* evaluate_expression_ast(token_list *node, error_list *err_list, symbol_table *table , size_t line, int *STRING_FLAG);
+char* evaluate_expression_ast(token_list *node, error_list *err_list, symbol_table *table , size_t line, int *STRING_FLAG, symbol_table *parent_symbol_table);
 
 //evaluate expression tree and return the answer
-char* evaluate_predetermined_logical_expression(token_list *node, error_list *err_list, symbol_table *table , size_t line);
+char* evaluate_predetermined_logical_expression(token_list *node, error_list *err_list, symbol_table *table , size_t line, symbol_table *parent_symbol_table);
 
 //evaluate expression tree and return the answer
 char* evaluate_logical_expression(token_list *node, error_list *err_list, symbol_table *table , size_t line, int *STRING_FLAG);

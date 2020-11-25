@@ -18,6 +18,7 @@
 	led2: .BYTE 1
 	t1: .BYTE 1
 	t2: .BYTE 1
+	t: .BYTE 1
 .CSEG
 
 
@@ -41,6 +42,7 @@ reset:
 
 setup:
 	sbi DDRB, 0
+	sbi DDRB, 1
 	sbi DDRB, 1
 	sbi DDRB, 1
 
@@ -74,6 +76,18 @@ main:
 	rcall delay
 	cbi PortB, 1
 	ldi delay_count, 60
+	rcall delay
+	rcall delay
+	ldi r19, 3000
+	sts t, r19
+	sbi PortB, 1
+	ldi delay_count, 60
+	rcall delay
+	rcall delay
+	rcall delay
+	cbi PortB, 1
+	ldi delay_count, 60
+	rcall delay
 	rcall delay
 	rcall delay
 

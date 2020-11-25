@@ -370,7 +370,7 @@ int is_DSEG(token_list *list, symbol_table *table){
 }
 
 //evaluate expression tree and return the answer
-char* evaluate_expression_ast(token_list *node, error_list *err_list, symbol_table *table , size_t line, int *STRING_FLAG){
+char* evaluate_expression_ast(token_list *node, error_list *err_list, symbol_table *table , size_t line, int *STRING_FLAG, symbol_table *parent_symbol_table){
 
 	if(node->token_count == 1){
 
@@ -411,7 +411,12 @@ char* evaluate_expression_ast(token_list *node, error_list *err_list, symbol_tab
 
 					symbol *temp = search_symbol(table, t->content);
 
-					if(temp != NULL){
+					symbol *parent_temp = NULL;
+
+					if( parent_symbol_table != NULL )
+						parent_temp = search_symbol(parent_symbol_table, t->content);
+
+					if(temp != NULL || parent_temp != NULL){
 
 						push(STACK, t);
 
@@ -447,6 +452,13 @@ char* evaluate_expression_ast(token_list *node, error_list *err_list, symbol_tab
 							strncmp(right->type, "T_IDENTIFIER", 12) != 0){
 				
 							symbol *s = search_symbol(table, left->content);
+							
+							if(s == NULL){
+
+								s = search_symbol(parent_symbol_table, left->content);
+
+							}
+							
 							left_operand = s->value;
 							right_operand = right->content;
 
@@ -454,6 +466,13 @@ char* evaluate_expression_ast(token_list *node, error_list *err_list, symbol_tab
 						  	      strncmp(left->type, "T_IDENTIFIER", 12) != 0){
 
 							symbol *s = search_symbol(table, right->content);
+
+							if(s == NULL){
+
+								s = search_symbol(parent_symbol_table, right->content);
+
+							}
+
 							right_operand = s->value;
 							left_operand = left->content;
 
@@ -461,7 +480,19 @@ char* evaluate_expression_ast(token_list *node, error_list *err_list, symbol_tab
 
 							symbol *l = search_symbol(table, left->content);
 							symbol *r = search_symbol(table, right->content);
-	
+
+							if( l == NULL ){
+
+								l = search_symbol(parent_symbol_table, left->content);
+
+							}
+
+							if( r == NULL ){
+
+								r = search_symbol(parent_symbol_table, right->content);
+
+							}
+
 							left_operand = l->value;
 							right_operand = r->value;
 
@@ -506,7 +537,6 @@ char* evaluate_expression_ast(token_list *node, error_list *err_list, symbol_tab
 
 		}
 
-
 	}else{
 
 		while( t != NULL ){
@@ -518,6 +548,12 @@ char* evaluate_expression_ast(token_list *node, error_list *err_list, symbol_tab
 			}else if( strncmp(t->type, "T_IDENTIFIER", 12) == 0 ){
 
 				symbol *temp = search_symbol(table, t->content);
+
+				if( temp == NULL ){
+
+					temp = search_symbol(parent_symbol_table, t->content);
+
+				}
 
 				if(temp != NULL){
 
@@ -554,6 +590,13 @@ char* evaluate_expression_ast(token_list *node, error_list *err_list, symbol_tab
 						strncmp(right->type, "T_IDENTIFIER", 12) != 0){
 				
 						symbol *s = search_symbol(table, left->content);
+
+						if( s == NULL ){
+
+							s = search_symbol(parent_symbol_table, left->content);
+
+						}
+
 						left_operand = atoi(s->value);
 						right_operand = atoi(right->content);
 
@@ -561,6 +604,13 @@ char* evaluate_expression_ast(token_list *node, error_list *err_list, symbol_tab
 					  	      strncmp(left->type, "T_IDENTIFIER", 12) != 0){
 
 						symbol *s = search_symbol(table, right->content);
+
+						if( s == NULL ){
+
+							s = search_symbol(parent_symbol_table, right->content);
+
+						}
+
 						right_operand = atoi(s->value);
 						left_operand = atoi(left->content);
 
@@ -569,6 +619,17 @@ char* evaluate_expression_ast(token_list *node, error_list *err_list, symbol_tab
 						symbol *l = search_symbol(table, left->content);
 						symbol *r = search_symbol(table, right->content);
 
+						if( l == NULL ){
+
+							l = search_symbol(parent_symbol_table, left->content);
+
+						}
+
+						if( r == NULL ){
+
+							r = search_symbol(parent_symbol_table, right->content);
+
+						}
 						left_operand = atoi(l->value);
 						right_operand = atoi(r->value);
 
@@ -614,7 +675,7 @@ char* evaluate_expression_ast(token_list *node, error_list *err_list, symbol_tab
 }
 
 //evaluate expression tree and return the answer
-char* evaluate_predetermined_logical_expression(token_list *node, error_list *err_list, symbol_table *table , size_t line){
+char* evaluate_predetermined_logical_expression(token_list *node, error_list *err_list, symbol_table *table , size_t line, symbol_table *parent_symbol_table){
 
 	token *t = node->first_token;
 

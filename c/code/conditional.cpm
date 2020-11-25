@@ -38,3 +38,16 @@ if( led2 != "8" ){
 	wait(t2)
 
 }
+
+if( led1 == 8 ){
+
+	var t = 3000
+	output(led2, HIGH)
+	wait(t)
+	output(led2, LOW)
+	wait(t)
+
+}
+
+
+
