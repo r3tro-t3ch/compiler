@@ -56,6 +56,9 @@ void visitor_evaluate_function_call(ast *t_ast, error_list *err_list, code *asm_
 //evaluate conditional if statements
 void visitor_evaluate_conditional_if_statements(ast *t_ast, error_list *err_list, code *asm_code, symbol_table *table);
 
+//evaluate conditional if else statements
+void visitor_evaluate_conditional_if_else_statements(ast *t_ast, error_list *err_list, code *asm_code, symbol_table *table);
+
 //evaluation of block of code
 void visitor_evaluate_code_block(ast_l *ast_list, error_list *err_list, symbol_table *parent_symbol_table,code *asm_code);
 

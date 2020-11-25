@@ -30,7 +30,11 @@ if( str == "STRING" ){
 
 }
 
-if( led2 == "8" ){
-
+if( led2 != "8" ){
+	
+	output(led2, HIGH)
+	wait(t2)
+	output(led2, LOW)
+	wait(t2)
 
 }

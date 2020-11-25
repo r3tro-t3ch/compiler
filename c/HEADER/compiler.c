@@ -1491,19 +1491,22 @@ ast *parse_conditional_statements(parser *p,error_list *err_list,  ast_l *ast_li
 
 	}
 
-	while(strncmp(get_current_token(p)->type, "T_NEWLINE", 9) == 0){
+	token *t = peek_next_token(p);
 
-		parse_newline(p, err_list, ast_list);
+	while(strncmp(t->type, "T_NEWLINE", 9) == 0){
+
 		get_next_token(p);
+		parse_newline(p, err_list, ast_list);
+		t = peek_next_token(p);
 
 	}
 
-	if(strncmp(get_current_token(p)->type,"T_NULL", 6) == 0){
+	if(strncmp(t->type,"T_NULL", 6) == 0){
 
 		node->ast_node_index = ast_list->line_count;
 		return node;
 	
-	}else if( strncmp(get_current_token(p)->type, "T_KEYWORD", 9) == 0 ){
+	}else if( strncmp(t->type, "T_KEYWORD", 9) == 0 ){
 
 		if( strncmp(get_current_token(p)->content, "else", 4) == 0){
 
@@ -1543,12 +1546,9 @@ ast *parse_conditional_statements(parser *p,error_list *err_list,  ast_l *ast_li
 
 		}
 
-	}else{
+	}else if( strncmp(t->type , "T_NEWLINE", 9) == 0 ){
 
-		//parse_newline(p, err_list, ast_list);
-
-		node->ast_node_index = ast_list->line_count;
-		return node;
+		parse_newline(p, err_list, ast_list);
 
 	}
 
@@ -1684,6 +1684,10 @@ ast_l* parse_statements(parser *p, error_list *err_list){
 
 	while(strncmp(get_current_token(p)->type, "T_NULL", 6) != 0 ){
 
+//		printf("\ncurrent_token-> %s, content -> %s\n",
+//				get_current_token(p)->type,
+//				get_current_token(p)->content);
+
 		if( strncmp(get_current_token(p)->type, "T_KEYWORD", 10) == 0){
 
 			if( strncmp(get_current_token(p)->content, "var", 3) == 0){
@@ -1697,12 +1701,10 @@ ast_l* parse_statements(parser *p, error_list *err_list){
 				}
 			}else if( strncmp(get_current_token(p)->content, "if", 2) == 0 ){
 
-				printf("here\n");
 				ast *node = parse_conditional_statements(p, err_list, ast_list);
 
 				if(node != NULL){
 
-					printf("checking\n");
 					add_new_ast(ast_list, node);
 
 				}
