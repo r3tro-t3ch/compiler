@@ -1,13 +1,36 @@
-var led1 = 1
-var led2 = 1 
-var button = 8
+var led1 = 8
+var led2 = 9
+var str = "STRING"
+var t1 = 1000
+var t2 = 2000
 
-if( led1 == led2 && button == 8){
+if( led1 == led2){
 
-	output(a, HIGH)
+	output(led1, HIGH)
+	wait(t1)
+	output(led1, LOW)
+	wait(t1)
 
 }else{
 
-	output(1, LOW)
+	output(led1, HIGH)
+	wait(t2)
+	output(led1, LOW )
+	wait(t2)
+
+}
+
+
+if( str == "STRING" ){
+
+	output(led2, HIGH)
+	wait(t1)
+	output(led2, LOW)
+	wait(t1)
+
+}
+
+if( led2 == "8" ){
+
 
 }

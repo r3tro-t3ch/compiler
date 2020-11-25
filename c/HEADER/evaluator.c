@@ -745,12 +745,480 @@ void visitor_evaluate_conditional_if_statements(ast *t_ast, error_list *err_list
 
 		//can be predetermined
 		char* answer = evaluate_predetermined_logical_expression(t_ast->conditional_statement_expr, err_list, table, t_ast->ast_node_index);			
-
 		if( answer != NULL ){
 			printf("condition ans = %s\n",  answer);
+
+			if( strncmp(answer, "true", 4) == 0 ){
+
+				visitor_evaluate_code_block(t_ast->true_block, err_list, table, asm_code);
+
+			}else{
+
+				visitor_evaluate_code_block(t_ast->false_block, err_list, table, asm_code);
+
+			}
+
 		}
+
 	}
 
+}
+
+//evaluation of block of code
+void visitor_evaluate_code_block(ast_l *ast_list, error_list *err_list, symbol_table *parent_symbol_table, code *asm_code){
+
+	symbol_table *table = parent_symbol_table;
+
+	symbol *s, *temp_s;
+	
+	ast *t_ast = ast_list->root_node;
+
+	while(t_ast != NULL){
+
+		if( strncmp(t_ast->type, "AST_VAR_DEF_ASSIGNMENT_FUNCTION", 31) == 0){
+
+			temp_s = search_symbol(table, t_ast->var_def_var_name);
+
+			if(temp_s == NULL){
+
+				char *temp_code = calloc(100, sizeof(char));
+
+				sprintf(temp_code,
+						"\t%s: .BYTE 1\n",
+						t_ast->var_def_var_name);
+
+				strncat(asm_code->DSEG, temp_code, strlen(temp_code));
+
+				asm_code->DSEG_FLAG = 1;
+
+				add_new_symbol(table, new_var_symbol(t_ast->var_def_var_name,t_ast->var_def_var_name, "DSEG_VAR"));
+
+				visitor_evaluate_input_funtion_call(t_ast->var_def_var_name, t_ast, err_list, asm_code, table);
+
+			}else{
+
+				size_t err_msg_len = strlen(t_ast->var_def_var_name) + ERR_MSG_VAR_PRESENT_LEN;
+
+				char *err_msg = calloc(err_msg_len, sizeof(char));
+
+				snprintf(err_msg, err_msg_len,
+						 "variable %s is already declared\n",
+						 t_ast->var_def_var_name);
+
+				add_new_error(err_list, new_error(err_msg, t_ast->ast_node_index));
+
+			}
+
+		}else if( strncmp(t_ast->type, "AST_VAR_DEF_ASSIGNMENT", 22) == 0){
+
+			temp_s = search_symbol(table, t_ast->var_def_var_name);
+
+			//checking if the give variable name is present or not
+			//else raise an error
+
+			if(temp_s == NULL){
+
+				/*                IMPLEMENTING EXPRESSION EVAL                */
+
+				token_list* list = t_ast->var_def_var_expr;
+
+				int FLAG = 0;
+				int *STRING_FLAG = &FLAG;
+
+				if( is_DSEG(list, table) == 1 ){
+
+					/******************************************/
+					/*     ADD VARIABLE NOT PRESENT ERROR	  */
+					/******************************************/
+
+					char *temp_expr = calloc(100, sizeof(char));
+					
+					//check for undeclared variables
+					
+					if( is_undeclared_var_present(list, table, err_list, t_ast->ast_node_index) == 0 ){
+
+	//					print_token_list(list);
+
+						token_list* infix = postfix_to_infix(list);
+
+						token *t = infix->first_token;
+
+						/****************************/
+						/*raise string present error*/
+						/****************************/
+
+						strncat(temp_expr, "(", 2);
+
+						while(t != NULL){
+
+							if(strncmp(t->type, "T_IDENTIFIER", 12) == 0){
+
+								strncat(temp_expr,"$",2 );
+
+							}
+
+							strncat(temp_expr, t->content, strlen(t->content));
+
+							t = t->next_token;
+
+						}
+
+						strncat(temp_expr, ")", 2);
+
+						char *temp_reg = use_register(register_list);
+
+						char *temp_code = calloc(100, sizeof(char));
+					
+						//declaring variable in asm
+						sprintf(temp_code,
+								"\t%s: .BYTE 1\n",
+								t_ast->var_def_var_name);
+
+						strncat(asm_code->DSEG, temp_code, strlen(temp_code));
+
+						asm_code->DSEG_FLAG = 1;
+
+						//defining variable
+						free(temp_code);
+
+						temp_code = calloc(100, sizeof(char));
+
+						sprintf(temp_code, 
+								"\tldi %s, %s\n"
+								"\tsts %s, %s\n",
+								temp_reg, temp_expr, t_ast->var_def_var_name, temp_reg);
+
+						strncat(asm_code->asm_main_code, temp_code, strlen(temp_code));
+
+						//updating symbol table
+						symbol *s = new_var_symbol( t_ast->var_def_var_name,
+													t_ast->var_def_var_name,
+													"DSEG_VAR");
+
+						add_new_symbol(table, s);
+	
+						free(temp_expr);
+						free(temp_code);
+
+					
+					}
+
+				}else{
+
+//					printf("******************TOKEN LIST*******************\n");
+//					print_token_list(list);
+//					printf("\n");
+
+					char* answer = evaluate_expression_ast(list, err_list, table, t_ast->ast_node_index, STRING_FLAG);
+
+					if(answer != NULL){
+
+						printf("ans = %s \n",  answer);
+
+						if(*STRING_FLAG == 0){
+
+							char *temp_code = calloc(100, sizeof(char));
+					
+							//declaring variable in asm
+							sprintf(temp_code,
+									"\t%s: .BYTE 1\n",
+									t_ast->var_def_var_name);
+
+							strncat(asm_code->DSEG, temp_code, strlen(temp_code));
+
+							asm_code->DSEG_FLAG = 1;
+
+							//defining variable in asm
+						
+							free(temp_code);
+	
+							temp_code = calloc(100, sizeof(char));
+
+							char *temp_reg = use_register(register_list);
+
+							sprintf(temp_code,
+									"\tldi %s, %s\n"
+									"\tsts %s, %s\n",
+									temp_reg, answer, t_ast->var_def_var_name, temp_reg);
+
+							strncat(asm_code->asm_main_code,temp_code, strlen(temp_code));
+				
+							//reuse the same register for another operation
+							register_index--;
+
+							free(temp_code);
+
+							s = new_var_symbol( t_ast->var_def_var_name,
+												answer,
+												"T_IDENTIFIER");
+
+						}else{
+					
+							s = new_var_symbol( t_ast->var_def_var_name,
+												answer,
+												"T_STRING");
+				
+						}
+
+						add_new_symbol(table, s);
+					
+					}
+
+				}
+			}else{
+
+				size_t err_msg_len = strlen(t_ast->var_def_var_name) + ERR_MSG_VAR_PRESENT_LEN;
+
+				char *err_msg = calloc(err_msg_len, sizeof(char));
+
+				snprintf(err_msg, err_msg_len,
+						 "variable %s is already declared\n",
+						 t_ast->var_def_var_name);
+
+				add_new_error(err_list, new_error(err_msg, t_ast->ast_node_index));
+
+			}
+			
+		}else if( strncmp(t_ast->type, "AST_VAR_DEF", 11) == 0 ){
+
+			temp_s = search_symbol(table, t_ast->var_def_var_name);
+
+			//checking if the give variable name is present or not
+			//else raise an error
+
+			if(temp_s == NULL){
+
+				/*                IMPLEMENTING EXPRESSION EVAL                */
+
+				char *temp_code = calloc(100, sizeof(char));
+					
+				//declaring variable in asm
+				sprintf(temp_code,
+						"\t%s: .BYTE 1\n",
+						t_ast->var_def_var_name);
+
+				strncat(asm_code->DSEG, temp_code, strlen(temp_code));
+
+				asm_code->DSEG_FLAG = 1;
+
+				s = new_var_symbol( t_ast->var_def_var_name,
+									"NA",
+									"NA");
+				
+				add_new_symbol(table, s);
+
+			}else{
+
+				size_t err_msg_len = strlen(t_ast->var_def_var_name) + ERR_MSG_VAR_PRESENT_LEN;
+
+				char *err_msg = calloc(err_msg_len, sizeof(char));
+
+				snprintf(err_msg, err_msg_len,
+						 "variable %s is already declared\n",
+						 t_ast->var_def_var_name);
+
+				add_new_error(err_list, new_error(err_msg, t_ast->ast_node_index));
+
+			}
+		
+		}else if( strncmp(t_ast->type, "AST_VAR_ASSIGNMENT_FUNCTION", 28) == 0 ){
+
+			temp_s = search_symbol(table, t_ast->var_name);
+
+			if( temp_s != NULL ){
+
+				char *temp_code = calloc(100, sizeof(char));
+
+				sprintf(temp_code,
+						"\t%s: .BYTE 1\n",
+						t_ast->var_name);
+
+				strncat(asm_code->DSEG, temp_code, strlen(temp_code));
+
+				asm_code->DSEG_FLAG = 1;
+
+				update_symbol(table, new_var_symbol(t_ast->var_name, t_ast->var_name, "DSEG_VAR"));
+
+				visitor_evaluate_input_funtion_call(t_ast->var_name, t_ast, err_list, asm_code, table);
+			
+			}else{
+
+				size_t err_msg_len = strlen(t_ast->var_name) + ERR_MSG_VAR_NOT_PRESENT_LEN;
+
+				char *err_msg = calloc(err_msg_len, sizeof(char));
+
+				snprintf(err_msg, err_msg_len,
+						 "variable %s is not declared\n",
+						 t_ast->var_name);
+
+				add_new_error(err_list, new_error(err_msg, t_ast->ast_node_index));
+
+			}
+
+
+		}else if( strncmp(t_ast->type, "AST_VAR_ASSIGNMENT", 18) == 0){
+
+			temp_s = search_symbol(table, t_ast->var_name);
+
+			//checking if the give variable name is present or not
+			//else raise an error
+
+			if(temp_s != NULL){
+
+				/*                IMPLEMENTING EXPRESSION EVAL                */
+
+				token_list* list = t_ast->var_expr;
+
+				int FLAG = 0;
+				int *STRING_FLAG = &FLAG;
+
+				if( is_DSEG(list, table) == 1 ){
+
+					/******************************************/
+					/*     ADD VARIABLE NOT PRESENT ERROR	  */
+					/******************************************/
+
+					if( is_undeclared_var_present(list, table, err_list, t_ast->ast_node_index) == 0 ){
+		
+						char *temp_expr = calloc(100, sizeof(char));
+
+	//					print_token_list(list);
+
+						token_list* infix = postfix_to_infix(list);
+						token *t = infix->first_token;
+
+						/****************************/
+						/*raise string present error*/
+						/****************************/
+
+						strncat(temp_expr, "(", 2);
+
+						while(t != NULL){
+
+							if(strncmp(t->type, "T_IDENTIFIER", 12) == 0){
+
+								strncat(temp_expr,"$",2 );
+
+							}
+						
+							strncat(temp_expr, t->content, strlen(t->content));
+
+							t = t->next_token;
+
+						}
+
+						strncat(temp_expr, ")", 2);
+
+						char *temp_reg = use_register(register_list);
+
+						char *temp_code = calloc(100, sizeof(char));
+					
+						//defining variable
+						free(temp_code);
+
+						temp_code = calloc(100, sizeof(char));
+
+						sprintf(temp_code, 
+								"\tldi %s, %s\n"
+								"\tsts %s, %s\n",
+								temp_reg, temp_expr, t_ast->var_name, temp_reg);
+
+						//reuse register for other operations
+						register_index--;
+
+						strncat(asm_code->asm_main_code, temp_code, strlen(temp_code));
+
+						//updating symbol table
+						symbol *s = new_var_symbol( t_ast->var_name,
+													t_ast->var_name,
+													"DSEG_VAR");
+	
+						update_symbol(table, s);
+	
+						free(temp_expr);
+						free(temp_code);
+
+					}
+
+				}else{
+
+					char* answer = evaluate_expression_ast(list, err_list, table, t_ast->ast_node_index, STRING_FLAG);
+
+					if(answer != NULL){
+
+						printf("ans = %s \n",  answer);
+
+						if(*STRING_FLAG == 0){
+
+							//number
+							
+							char *temp_code = calloc(100, sizeof(char));
+
+							char *temp_reg = use_register(register_list);
+
+							sprintf(temp_code, 
+									"\tldi %s, %s\n"
+									"\tsts %s, %s\n",
+									temp_reg, answer, t_ast->var_name, temp_reg);
+
+							//reusing the register for other operations
+							register_index--;
+
+							strncat(asm_code->asm_main_code, temp_code, strlen(temp_code));
+
+							free(temp_code);
+
+							//updating the symbol table
+							temp_s->value = answer;
+
+							update_symbol( 	table,
+										 	temp_s);
+
+
+						}else{
+					
+							//string
+							temp_s->value = answer;
+	
+							update_symbol( 	table,
+										 	temp_s);
+
+						}
+
+					}
+
+				}
+			}else{
+
+				size_t err_msg_len = strlen(t_ast->var_name) + ERR_MSG_VAR_NOT_PRESENT_LEN;
+
+				char *err_msg = calloc(err_msg_len, sizeof(char));
+
+				snprintf(err_msg, err_msg_len,
+						 "variable %s is not declared\n",
+						 t_ast->var_name);
+
+				add_new_error(err_list, new_error(err_msg, t_ast->ast_node_index));
+
+			}
+
+		}else if( strncmp(t_ast->type,"AST_BUILTIN_FUNCTION_CALL",26) == 0 ){
+
+			visitor_evaluate_function_call(t_ast, err_list, asm_code, table);			
+
+		}else if( strncmp(t_ast->type, "AST_CONDITIONAL_IF", 18) == 0 ){
+
+			visitor_evaluate_conditional_if_statements(t_ast, err_list, asm_code, table);
+
+		}else if( strncmp(t_ast->type, "AST_CONDITIONAL_IF_ELSE", 23) == 0 ){
+
+			visitor_evaluate_conditional_if_statements(t_ast, err_list, asm_code, table);
+
+		}//other asts
+
+		t_ast = t_ast->next_ast_node;
+
+	}
 }
 
 //visitor

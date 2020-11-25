@@ -53,6 +53,7 @@ int main(int argc, char *argv[]){
 
 		if(err_list->error_index > 0){
 
+//			print_ast(ast_list);
 			print_errors(err_list);
 
 		}else{

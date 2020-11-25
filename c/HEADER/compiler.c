@@ -1481,9 +1481,9 @@ ast *parse_conditional_statements(parser *p,error_list *err_list,  ast_l *ast_li
 
 		}
 		node->true_block = true_ast_list;
-		printf("\nif\n");
-		print_ast(true_ast_list);
-		printf("\n");
+//		printf("\nif\n");
+//		print_ast(true_ast_list);
+//		printf("\n");
 
 	}else{
 
@@ -1491,25 +1491,19 @@ ast *parse_conditional_statements(parser *p,error_list *err_list,  ast_l *ast_li
 
 	}
 
-	token *t = peek_next_token(p);
-	
-	if(strncmp(t->type,"T_NULL", 6) == 0){
+	while(strncmp(get_current_token(p)->type, "T_NEWLINE", 9) == 0){
+
+		parse_newline(p, err_list, ast_list);
+		get_next_token(p);
+
+	}
+
+	if(strncmp(get_current_token(p)->type,"T_NULL", 6) == 0){
+
+		node->ast_node_index = ast_list->line_count;
 		return node;
-	}
-
-	if( strncmp(get_current_token(p)->type, "T_NEWLINE", 9) == 0 ){
-
-		while(strncmp(get_current_token(p)->type, "T_NEWLINE", 9) == 0){
-			
-			parse_newline(p, err_list, ast_list);
-			get_next_token(p);
-
-		}
-
-	}
-
-
-	if( strncmp(get_current_token(p)->type, "T_KEYWORD", 9) == 0 ){
+	
+	}else if( strncmp(get_current_token(p)->type, "T_KEYWORD", 9) == 0 ){
 
 		if( strncmp(get_current_token(p)->content, "else", 4) == 0){
 
@@ -1533,19 +1527,28 @@ ast *parse_conditional_statements(parser *p,error_list *err_list,  ast_l *ast_li
 				}
 
 				node->false_block = false_ast_list;
-				printf("\n\nelse\n");
-				print_ast(false_ast_list);
-				printf("\n\n");
+//				printf("\n\nelse\n");
+//				print_ast(false_ast_list);
+//				printf("\n\n");
 
 			}else{
 				return NULL;
 			}
 
+		}else{
+	
+			node->ast_node_index = ast_list->line_count;
+
+			return node;
+
 		}
 
 	}else{
 
-		parse_newline(p, err_list, ast_list);
+		//parse_newline(p, err_list, ast_list);
+
+		node->ast_node_index = ast_list->line_count;
+		return node;
 
 	}
 
@@ -1694,10 +1697,12 @@ ast_l* parse_statements(parser *p, error_list *err_list){
 				}
 			}else if( strncmp(get_current_token(p)->content, "if", 2) == 0 ){
 
+				printf("here\n");
 				ast *node = parse_conditional_statements(p, err_list, ast_list);
 
 				if(node != NULL){
 
+					printf("checking\n");
 					add_new_ast(ast_list, node);
 
 				}
