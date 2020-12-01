@@ -41,7 +41,6 @@ reset:
 	sei								;enabling global interrupt
 
 setup:
-	sbi DDRB, 0
 	sbi DDRB, 1
 	sbi DDRB, 1
 	sbi DDRB, 1
@@ -56,14 +55,6 @@ main:
 	sts t1, r16
 	ldi r16, 2000
 	sts t2, r16
-	sbi PortB, 0
-	ldi delay_count, 60
-	rcall delay
-	rcall delay
-	cbi PortB, 0
-	ldi delay_count, 60
-	rcall delay
-	rcall delay
 	sbi PortB, 1
 	ldi delay_count, 60
 	rcall delay

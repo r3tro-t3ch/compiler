@@ -832,7 +832,8 @@ void visitor_evaluate_conditional_if_else_statements(ast *t_ast, error_list *err
 void visitor_evaluate_code_block(ast_l *ast_list, error_list *err_list, symbol_table *parent_symbol_table, code *asm_code){
 
 	symbol_table *table = new_symbol_table();
-	symbol *s, *temp_s, *parent_table_s;
+	symbol *s, *temp_s;
+	symbol *parent_table_s = NULL;
 	
 	ast *t_ast = ast_list->root_node;
 
@@ -894,8 +895,11 @@ void visitor_evaluate_code_block(ast_l *ast_list, error_list *err_list, symbol_t
 
 			temp_s = search_symbol(table, t_ast->var_def_var_name);
 
-			parent_table_s = search_symbol(parent_symbol_table, t_ast->var_def_var_name);
+			if(parent_symbol_table != NULL){
 
+				parent_table_s = search_symbol(parent_symbol_table, t_ast->var_def_var_name);
+
+			}
 			//checking if the give variable name is present or not
 			//else raise an error
 
@@ -1196,12 +1200,16 @@ void visitor_evaluate_code_block(ast_l *ast_list, error_list *err_list, symbol_t
 
 			temp_s = search_symbol(table, t_ast->var_name);
 
-			parent_table_s = search_symbol(parent_symbol_table, t_ast->var_def_var_name);
+			if(parent_symbol_table != NULL){
+
+				parent_table_s = search_symbol(parent_symbol_table, t_ast->var_name);
+
+			}
 
 			//checking if the give variable name is present or not
 			//else raise an error
 
-			if(temp_s != NULL && parent_symbol_table == NULL){
+			if(temp_s != NULL && parent_table_s == NULL){
 
 				/*                IMPLEMENTING EXPRESSION EVAL                */
 
@@ -1433,10 +1441,10 @@ void visitor_evaluate_code_block(ast_l *ast_list, error_list *err_list, symbol_t
 							free(temp_code);
 
 							//updating the symbol table
-							temp_s->value = answer;
+							parent_table_s->value = answer;
 
 							update_symbol( 	parent_symbol_table,
-										 	temp_s);
+										 	parent_table_s);
 
 
 						}else{

@@ -14,8 +14,20 @@ int is_expression_token(token *t){
 		strncmp(t->type, "T_ASTERIX", 9) == 0 ||
 		strncmp(t->type, "T_FSLASH", 8) == 0 ||
 		strncmp(t->type, "T_MOD", 5) == 0 ||
-		strncmp(t->type, "T_STRING", 8) == 0 
+		strncmp(t->type, "T_STRING", 8) == 0 ||
+		strncmp(t->type, "T_KEYWORD", 9) == 0
 	  ){
+
+		if(strncmp(t->type, "T_KEYWORD", 9) == 0){
+
+			if( strncmp(t->content,"HIGH", 4) == 0 || 
+				strncmp(t->content, "LOW", 3) == 0 ){
+
+				return 1;
+
+			}
+
+		}
 
 		return 1;
 
@@ -47,10 +59,22 @@ int is_logical_expression_token(token *t){
 
 	if( strncmp(t->type, "T_IDENTIFIER", 12) == 0 ||
 		strncmp(t->type, "T_CONSTANT", 10) == 0 ||
+		strncmp(t->type, "T_KEYWORD", 9) == 0 ||
 		strncmp(t->type, "T_STRING", 8) == 0 || 
-		is_logical_operator(t) == 1
+		is_logical_operator(t) == 1 
 	  ){
 
+		if(strncmp(t->type, "T_KEYWORD", 9) == 0){
+	
+			if( strncmp(t->content,"HIGH", 4) == 0 || 
+				strncmp(t->content, "LOW", 3) == 0 ){
+
+				return 1;
+
+			}
+
+		}
+		
 		return 1;
 
 	}
@@ -403,9 +427,23 @@ char* evaluate_expression_ast(token_list *node, error_list *err_list, symbol_tab
 			while( t != NULL ){
 				
 				if( strncmp(t->type, "T_CONSTANT", 10) == 0 ||
-					strncmp(t->type, "T_STRING", 7) == 0){
+					strncmp(t->type, "T_STRING", 7) == 0 ||
+					strncmp(t->type,"T_KEYWORD", 9) == 0){
 
-					push(STACK, t);
+	
+					if( strncmp(t->content, "HIGH", 4) == 0 ){
+
+							push(STACK, new_token("T_CONSTANT", "1"));
+
+					}else if( strncmp(t->content, "LOW", 3) == 0 ){
+
+							push(STACK, new_token("T_CONSTANT", "0"));
+
+					}else{
+						
+						push(STACK, t);
+
+					}
 
 				}else if( strncmp(t->type, "T_IDENTIFIER", 12) == 0 ){
 
@@ -685,11 +723,19 @@ char* evaluate_predetermined_logical_expression(token_list *node, error_list *er
 	
 	while( t != NULL){
 
-		if( is_logical_operator(t) != 1 ){
+		if( strncmp(t->content, "HIGH", 4) == 0 ){
+
+			push(STACK, new_token("T_CONSTANT", "1"));
+
+		}else if( strncmp(t->content, "LOW", 3) == 0 ){
+
+			push(STACK, new_token("T_CONSTANT", "0"));
+
+		}else if( is_logical_operator(t) != 1 ){
 
 			//operand
 			push(STACK, t);
-
+		
 		}else{
 
 			//operators
@@ -708,9 +754,20 @@ char* evaluate_predetermined_logical_expression(token_list *node, error_list *er
 
 					symbol *s = search_symbol(table, left_operand->content);
 
-					if( s != NULL ){
+					symbol *parent_s = NULL ;
+
+					if( parent_symbol_table != NULL ){
+						parent_s = search_symbol(parent_symbol_table, left_operand->content);
+					}
+
+					if( s != NULL  && parent_s == NULL){
 
 						left = new_operand(s->value, s->data_type);
+						right = new_operand(right_operand->content, right_operand->type);
+
+					}else if( parent_s != NULL  && s == NULL){
+
+						left = new_operand(parent_s->value, parent_s->data_type);
 						right = new_operand(right_operand->content, right_operand->type);
 
 					}else{
@@ -736,10 +793,21 @@ char* evaluate_predetermined_logical_expression(token_list *node, error_list *er
 
 					symbol *s = search_symbol(table, right_operand->content);
 
-					if( s != NULL ){
+					symbol *parent_s = NULL ;
+
+					if( parent_symbol_table != NULL ){
+						parent_s = search_symbol(parent_symbol_table, left_operand->content);
+					}
+
+					if( s != NULL && parent_s == NULL ){
 
 						left = new_operand(left_operand->content, left_operand->type);
 						right = new_operand(s->value, s->data_type);
+
+					}else if( parent_s != NULL  && s == NULL){
+
+						left = new_operand(left_operand->content, left_operand->type);
+						right = new_operand(parent_s->value, parent_s->data_type);
 
 					}else{
 
@@ -761,10 +829,40 @@ char* evaluate_predetermined_logical_expression(token_list *node, error_list *er
 					symbol *l = search_symbol(table, left_operand->content);
 					symbol *r = search_symbol(table, right_operand->content);
 
-					if( l != NULL && r != NULL ){
+					symbol *parent_l = NULL;
+					symbol *parent_r = NULL;
 
-						left = new_operand(l->value, l->data_type);
-						right = new_operand(r->value, r->data_type);
+					if(parent_symbol_table != NULL){
+
+						parent_l = search_symbol(parent_symbol_table, left_operand->content);
+						parent_r = search_symbol(parent_symbol_table, right_operand->content);
+
+					}
+
+					if( (l != NULL && r != NULL) || (parent_l != NULL && parent_r != NULL) ||
+						(l != NULL && parent_r != NULL) || (parent_l != NULL && r != NULL)){
+
+						if( (l != NULL && r != NULL) && (parent_l == NULL && parent_r == NULL) ){
+
+							left = new_operand(l->value, l->data_type);
+							right = new_operand(r->value, r->data_type);
+						
+						}else if( (l == NULL && r == NULL) && (parent_l != NULL && parent_r != NULL) ){
+
+							left = new_operand(parent_l->value, parent_l->data_type);
+							right = new_operand(parent_r->value, parent_r->data_type);
+						
+						}else if( ( l != NULL && parent_r != NULL) && (parent_l == NULL && r == NULL) ){
+							
+							left = new_operand(l->value, l->data_type);
+							right = new_operand(parent_r->value, parent_r->data_type);
+
+						}else if((l == NULL && parent_r == NULL) && (parent_l != NULL && r != NULL)){
+
+							left = new_operand(parent_l->value, parent_l->data_type);
+							right = new_operand(r->value, r->data_type);
+
+						}
 
 					}else{
 
@@ -1022,12 +1120,7 @@ char* evaluate_logical_expression(token_list *node, error_list *err_list, symbol
 //check precedence of operator
 int check_precedence(token *t){
 
-	/*if(
-		strncmp(t->type, "T_LPAREN", 8) == 0 ||
-		strncmp(t->type, "T_RPAREN", 8) == 0
-	  ){
-		return 11;
-	}else*/ if(
+	if(
 		strncmp(t->type,"T_LNOT", 6) == 0
 	  ){
 		return 10;
@@ -1107,9 +1200,23 @@ token_list* infix_to_postfix(token_list *list){
 
 		if( strncmp(t->type,"T_CONSTANT",11) == 0 ||
 			strncmp(t->type,"T_IDENTIFIER", 12) == 0 ||
-			strncmp(t->type,"T_STRING", 8) == 0){
+			strncmp(t->type,"T_STRING", 8) == 0 ||
+			strncmp(t->type, "T_KEYWORD", 9) == 0){
+		
 
-			add_new_token(postfix_expression, new_token(t->type, t->content));
+				if( strncmp(t->content, "HIGH", 4) == 0 ){
+
+					add_new_token(postfix_expression, new_token("T_CONSTANT", "1"));
+
+					}else if( strncmp(t->content, "LOW", 3) == 0 ){
+
+					add_new_token(postfix_expression, new_token("T_CONSTANT", "0"));
+
+				}else{
+			
+					add_new_token(postfix_expression, new_token(t->type, t->content));
+				
+				}
 
 		}else if( strncmp(t->type,"T_LPAREN", 8) == 0 ){
 
@@ -1252,6 +1359,13 @@ int is_postfix_valid(token_list* list){
 		if( is_operator(t) == 1 || is_logical_operator(t) == 1 ){
 
 			operator_count++;
+
+		}else if(
+				strncmp(t->content, "HIGH", 4) == 0 ||
+				strncmp(t->content, "LOW", 3) == 0
+				){
+
+			operand_count++;
 
 		}else{
 

@@ -1,1 +1,17 @@
-var a = 10 + 20 * 10
+var a = 1 - HIGH
+var b
+
+if( a == LOW ){
+
+	b = 0
+
+}else{
+
+	b = 1
+
+}
+
+
+if(b == HIGH){
+	a = 1 
+}

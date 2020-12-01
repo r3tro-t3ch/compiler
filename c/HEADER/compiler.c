@@ -884,6 +884,7 @@ token_list* parse_expressions(parser *p){
 
 	}
 
+
 	token_list *postfix = infix_to_postfix(list);
 
 	return postfix;
@@ -1501,14 +1502,15 @@ ast *parse_conditional_statements(parser *p,error_list *err_list,  ast_l *ast_li
 
 	}
 
-	if(strncmp(t->type,"T_NULL", 6) == 0){
+	if(strncmp(get_current_token(p)->type,"T_NULL", 6) == 0){
 
 		node->ast_node_index = ast_list->line_count;
 		return node;
 	
-	}else if( strncmp(t->type, "T_KEYWORD", 9) == 0 ){
+	}else if( strncmp(get_current_token(p)->type, "T_KEYWORD", 9) == 0 ){
 
 		if( strncmp(get_current_token(p)->content, "else", 4) == 0){
+
 
 			if( parser_eat(get_current_token(p), "T_KEYWORD", err_list, ast_list->line_count) == 0 ){
 
@@ -1546,7 +1548,7 @@ ast *parse_conditional_statements(parser *p,error_list *err_list,  ast_l *ast_li
 
 		}
 
-	}else if( strncmp(t->type , "T_NEWLINE", 9) == 0 ){
+	}else if( strncmp(get_current_token(p)->type , "T_NEWLINE", 9) == 0 ){
 
 		parse_newline(p, err_list, ast_list);
 
